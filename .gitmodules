@@ -1,0 +1,6 @@
+[submodule "rocket-chip"]
+	path = rocket-chip
+	url = git@github.com:ucb-bar/rocket-chip.git
+[submodule "sifive-blocks"]
+	path = sifive-blocks
+	url = git@github.com:sifive/sifive-blocks.git
