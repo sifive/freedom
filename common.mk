@@ -30,8 +30,7 @@ $(FIRRTL_JAR): $(shell find $(rocketchip_dir)/firrtl/src/main/scala -iname "*.sc
 
 # Build .fir
 firrtl := $(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).fir
-firrtl_prm := $(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).prm
-$(firrtl) $(firrtl_prm): $(shell find $(base_dir)/src/main/scala -name '*.scala') $(FIRRTL_JAR)
+$(firrtl): $(shell find $(base_dir)/src/main/scala -name '*.scala') $(FIRRTL_JAR)
 	mkdir -p $(dir $@)
 	$(SBT) "run-main rocketchip.Generator $(BUILD_DIR) $(PROJECT) $(MODEL) $(CONFIG_PROJECT) $(CONFIG)"
 
