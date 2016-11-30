@@ -6,7 +6,7 @@ VIVADOFLAGS := \
 
 bit := obj/system.bit
 $(bit): script/impl.tcl  script/init.tcl
-	VSRC_TOP=$(VSRC_TOP) VSRC_CONSTS=$(VSRC_CONSTS) EXTRA_VSRCS="$(EXTRA_VSRCS)" $(VIVADO) $(VIVADOFLAGS) -source script/init.tcl -source script/impl.tcl
+	VSRC_TOP=$(VSRC_TOP) EXTRA_VSRCS="$(EXTRA_VSRCS)" $(VIVADO) $(VIVADOFLAGS) -source script/init.tcl -source script/impl.tcl
 
 .PHONY: bit
 bit: $(bit)

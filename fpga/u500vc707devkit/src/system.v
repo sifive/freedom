@@ -2,9 +2,6 @@
 `timescale 1ns/1ps
 `default_nettype none
 
-`define STRINGIFY(x) `"x`"
-`include `STRINGIFY(`VSRC_CONSTS)
-
 module system
 (
   //200Mhz differential sysclk
