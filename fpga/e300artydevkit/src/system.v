@@ -1,8 +1,5 @@
 `timescale 1ns/1ps
 
-`define STRINGIFY(x) `"x`"
-`include `STRINGIFY(`VSRC_CONSTS)
-
 module system
 (
   input wire CLK100MHZ,

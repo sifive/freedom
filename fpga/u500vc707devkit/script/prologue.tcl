@@ -50,15 +50,10 @@ if {[info exists ::env(EXTRA_VSRCS)]} {
 #}
 
 set vsrc_top $::env(VSRC_TOP)
-set vsrc_consts $::env(VSRC_CONSTS)
 
-set_property verilog_define [list \
-                                 "VSRC_CONSTS=${vsrc_consts}" \
-                                 "VSRC_TOP=${vsrc_top}" \
-                                ] $obj
+set_property verilog_define [list "VSRC_TOP=${vsrc_top}"] $obj
 
 add_files -norecurse -fileset $obj $vsrc_top
-add_files -norecurse -fileset $obj $vsrc_consts
 
 if {[get_filesets -quiet sim_1] eq ""} {
   create_fileset -simset sim_1
