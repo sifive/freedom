@@ -8,6 +8,7 @@ Kit](https://www.xilinx.com/products/boards-and-kits/arty.html). The Freedom
 U500 VC707 FPGA Dev Kit implements the Freedom U500 Platform and is designed to
 be mapped onto a [VC707 FPGA Evaluation
 Kit](https://www.xilinx.com/products/boards-and-kits/ek-v7-vc707-g.html).
+Both systems boot autonomously and can be controlled via an external debugger.
 
 Please read the section corresponding to the kit you are interested in for
 instructions on how to use this repo.
