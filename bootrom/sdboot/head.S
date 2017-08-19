@@ -1,15 +1,17 @@
 // See LICENSE for license details.
-// Execute in place
-// Jump directly to XIP_TARGET_ADDR
+#include <platform.h>
+#include "common.h"
 
   .section .text.init
   .option norvc
-  .globl _start
-_start:
+  .globl _prog_start
+_prog_start:
+  li sp, (PAYLOAD_DEST + 0x7fff000)
+  call main
   csrr a0, mhartid
   la a1, dtb
-  li t0, XIP_TARGET_ADDR
-  jr t0
+  li s1, PAYLOAD_DEST
+  jr s1
 
   .section .rodata
 dtb:

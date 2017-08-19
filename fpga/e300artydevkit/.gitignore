@@ -1,8 +1,0 @@
-.Xil
-.ip_user_files
-*.log
-*.html
-*.xml
-fsm_encoding.os
-obj
-src/generated

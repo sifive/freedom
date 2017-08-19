@@ -11,11 +11,23 @@
 # Optional variables:
 # - EXTRA_FPGA_VSRCS
 
+# export to bootloader
+export ROMCONF=$(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).rom.conf
+
+# export to fpga-shells
+export FPGA_TOP_SYSTEM=$(MODEL)
+export FPGA_BUILD_DIR=$(BUILD_DIR)/$(FPGA_TOP_SYSTEM)
+export fpga_common_script_dir=$(FPGA_DIR)/common/tcl
+export fpga_board_script_dir=$(FPGA_DIR)/$(BOARD)/tcl
+
+export BUILD_DIR
+
 EXTRA_FPGA_VSRCS ?=
 PATCHVERILOG ?= ""
+BOOTROM_DIR ?= ""
 
 base_dir := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
-rocketchip_dir := $(base_dir)/rocket-chip
+export rocketchip_dir := $(base_dir)/rocket-chip
 SBT ?= java -jar $(rocketchip_dir)/sbt-launch.jar
 
 # Build firrtl.jar and put it where chisel3 can find it.
@@ -25,6 +37,8 @@ FIRRTL ?= java -Xmx2G -Xss8M -XX:MaxPermSize=256M -cp $(FIRRTL_JAR) firrtl.Drive
 $(FIRRTL_JAR): $(shell find $(rocketchip_dir)/firrtl/src/main/scala -iname "*.scala")
 	$(MAKE) -C $(rocketchip_dir)/firrtl SBT="$(SBT)" root_dir=$(rocketchip_dir)/firrtl build-scala
 	touch $(FIRRTL_JAR)
+	mkdir -p $(rocketchip_dir)/lib
+	cp -p $(FIRRTL_JAR) rocket-chip/lib
 	mkdir -p $(rocketchip_dir)/chisel3/lib
 	cp -p $(FIRRTL_JAR) $(rocketchip_dir)/chisel3/lib
 
@@ -32,7 +46,7 @@ $(FIRRTL_JAR): $(shell find $(rocketchip_dir)/firrtl/src/main/scala -iname "*.sc
 firrtl := $(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).fir
 $(firrtl): $(shell find $(base_dir)/src/main/scala -name '*.scala') $(FIRRTL_JAR)
 	mkdir -p $(dir $@)
-	$(SBT) "run-main rocketchip.Generator $(BUILD_DIR) $(PROJECT) $(MODEL) $(CONFIG_PROJECT) $(CONFIG)"
+	$(SBT) "run-main freechips.rocketchip.system.Generator $(BUILD_DIR) $(PROJECT) $(MODEL) $(CONFIG_PROJECT) $(CONFIG)"
 
 .PHONY: firrtl
 firrtl: $(firrtl)
@@ -45,15 +59,24 @@ ifneq ($(PATCHVERILOG),"")
 	$(PATCHVERILOG)
 endif
 
-
 .PHONY: verilog
 verilog: $(verilog)
 
+romgen := $(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).rom.v
+$(romgen): $(verilog)
+ifneq ($(BOOTROM_DIR),"")
+	$(MAKE) -C $(BOOTROM_DIR) romgen
+	mv $(BUILD_DIR)/rom.v $@
+endif
+
+.PHONY: romgen
+romgen: $(romgen)
+
 # Build .mcs
 mcs := $(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).mcs
-$(mcs): $(verilog)
-	VSRC_TOP=$(verilog) EXTRA_VSRCS="$(EXTRA_FPGA_VSRCS)" $(MAKE) -C $(FPGA_DIR) mcs
-	cp $(FPGA_DIR)/obj/system.mcs $@
+$(mcs): $(romgen)
+	VSRCS="$(VSRCS)" $(MAKE) -C $(FPGA_DIR) mcs
+	cp $(BUILD_DIR)/$(MODEL)/obj/system.mcs $@
 
 .PHONY: mcs
 mcs: $(mcs)
@@ -61,5 +84,8 @@ mcs: $(mcs)
 # Clean
 .PHONY: clean
 clean:
+ifneq ($(BOOTROM_DIR),"")
+	$(MAKE) -C $(BOOTROM_DIR) clean
+endif
 	$(MAKE) -C $(FPGA_DIR) clean
 	rm -rf $(BUILD_DIR)

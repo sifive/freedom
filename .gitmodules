@@ -4,3 +4,6 @@
 [submodule "sifive-blocks"]
 	path = sifive-blocks
 	url = https://github.com/sifive/sifive-blocks.git
+[submodule "fpga-shells"]
+	path = fpga-shells
+	url = https://github.com/sifive/fpga-shells
