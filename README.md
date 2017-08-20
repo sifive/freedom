@@ -13,15 +13,24 @@ Both systems boot autonomously and can be controlled via an external debugger.
 Please read the section corresponding to the kit you are interested in for
 instructions on how to use this repo.
 
+Software Requirement
+--------------------
 
-Freedom E310 Arty FPGA Dev Kit
+To compile the bootloaders for both Freedom E300 Arty and U500 VC707
+FPGA dev kits, the RISC-V software toolchain must be installed locally and
+set the $(RISCV) environment variable to point to the location of where the
+RISC-V toolchains are installed. You can build the toolchain from scratch
+or download the tools here: https://www.sifive.com/products/tools/
+
+
+Freedom E300 Arty FPGA Dev Kit
 ------------------------------
 
-The Freedom E310 Arty FPGA Dev Kit implements a Freedom E310 chip.
+The Freedom E300 Arty FPGA Dev Kit implements a Freedom E300 chip.
 
 ### How to build
 
-The Makefile corresponding to the Freedom E310 Arty FPGA Dev Kit is
+The Makefile corresponding to the Freedom E300 Arty FPGA Dev Kit is
 `Makefile.e300artydevkit` and it consists of two main targets:
 
 - `verilog`: to compile the Chisel source files and generate the Verilog files.
