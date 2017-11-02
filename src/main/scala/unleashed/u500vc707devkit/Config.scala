@@ -37,7 +37,6 @@ class U500VC707DevKitPeripherals extends Config((site, here, up) => {
 
 // Freedom U500 VC707 Dev Kit
 class U500VC707DevKitConfig extends Config(
-  new WithoutFPU                 ++
   new WithNExtTopInterrupts(0)   ++
   new U500VC707DevKitPeripherals ++
   new FreedomUVC707Config().alter((site,here,up) => {
