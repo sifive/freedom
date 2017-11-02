@@ -10,7 +10,7 @@ import freechips.rocketchip.diplomacy._
 import sifive.blocks.devices.gpio._
 import sifive.blocks.devices.pinctrl.{BasePin}
 
-import sifive.fpgashells.shell.xilinx.vc707shell.{VC707Shell}
+import sifive.fpgashells.shell.xilinx.vc707shell._
 import sifive.fpgashells.ip.xilinx.{IOBUF}
 
 //-------------------------------------------------------------------------
@@ -27,7 +27,10 @@ object PinGen {
 // U500VC707DevKitFPGAChip
 //-------------------------------------------------------------------------
 
-class U500VC707DevKitFPGAChip(implicit override val p: Parameters) extends VC707Shell {
+class U500VC707DevKitFPGAChip(implicit override val p: Parameters)
+    extends VC707Shell
+    with HasPCIe
+    with HasDDR3 {
 
   //-----------------------------------------------------------------------
   // DUT
@@ -55,7 +58,7 @@ class U500VC707DevKitFPGAChip(implicit override val p: Parameters) extends VC707
     val gpioParams = p(PeripheryGPIOKey)
     val gpio_pins = Wire(new GPIOPins(() => PinGen(), gpioParams(0)))
 
-    gpio_pins.fromPort(dut.gpio(0))
+    GPIOPinsFromPort(gpio_pins, dut.gpio(0))
 
     gpio_pins.pins.foreach { _.i.ival := Bool(false) }
     gpio_pins.pins.zipWithIndex.foreach {

@@ -13,6 +13,8 @@ import sifive.blocks.devices.gpio._
 import sifive.blocks.devices.spi._
 import sifive.blocks.devices.uart._
 
+import sifive.fpgashells.devices.xilinx.xilinxvc707mig.{MemoryXilinxDDRKey,XilinxVC707MIGParams}
+
 // Default FreedomUVC707Config
 class FreedomUVC707Config extends Config(
   new WithJtagDTM            ++
@@ -40,7 +42,8 @@ class U500VC707DevKitConfig extends Config(
   new U500VC707DevKitPeripherals ++
   new FreedomUVC707Config().alter((site,here,up) => {
     case ErrorParams => ErrorParams(Seq(AddressSet(0x3000, 0xfff)))
-    case PeripheryBusParams => up(PeripheryBusParams, site).copy(frequency = 50000000) // 50 MHz hperiphery
+    case PeripheryBusKey => up(PeripheryBusKey, site).copy(frequency = 50000000) // 50 MHz hperiphery
+    case MemoryXilinxDDRKey => XilinxVC707MIGParams(address = Seq(AddressSet(0x80000000L,0x40000000L-1))) //1GB
     case DTSTimebase => BigInt(1000000)
     case ExtMem => up(ExtMem).copy(size = 0x40000000L)
     case JtagDTMKey => new JtagDTMConfig (
