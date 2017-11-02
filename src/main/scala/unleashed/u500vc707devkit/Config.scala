@@ -19,7 +19,7 @@ import sifive.fpgashells.devices.xilinx.xilinxvc707mig.{MemoryXilinxDDRKey,Xilin
 class FreedomUVC707Config extends Config(
   new WithJtagDTM            ++
   new WithNMemoryChannels(1) ++
-  new WithNBigCores(1)       ++
+  new WithNBigCores(4)       ++
   new BaseConfig
 )
 
