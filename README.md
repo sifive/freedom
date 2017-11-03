@@ -55,6 +55,9 @@ The default bootrom consists of a program that immediately jumps to address
 0x20400000, which is 0x00400000 bytes into the SPI flash memory on the Arty
 board.
 
+### Using the generated MCS Image
+
+For instructions for getting the generated image onto an FPGA and programming it with software using the [Freedom E SDK](https://github.com/sifive/freedom-e-sdk), please see the [Freedom E310 Arty FPGA Dev Kit Getting Started Guide](https://www.sifive.com/documentation/freedom-soc/freedom-e300-arty-fpga-dev-kit-getting-started-guide/).
 
 Freedom U500 VC707 FPGA Dev Kit
 -------------------------------
