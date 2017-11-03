@@ -72,11 +72,26 @@ endif
 .PHONY: romgen
 romgen: $(romgen)
 
+f := $(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).vsrcs.F
+$(f):
+	echo $(VSRCS) > $@
+
+bit := $(BUILD_DIR)/obj/$(MODEL).bit
+$(bit): $(romgen) $(f)
+	cd $(BUILD_DIR); vivado \
+		-nojournal -mode batch \
+		-source $(fpga_common_script_dir)/vivado.tcl \
+		-tclargs \
+		-top-module "$(MODEL)" \
+		-F "$(f)" \
+		-ip-vivado-tcls "$(shell find '$(BUILD_DIR)' -name '*.vivado.tcl')" \
+		-board "$(BOARD)"
+
+
 # Build .mcs
-mcs := $(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).mcs
-$(mcs): $(romgen)
-	VSRCS="$(VSRCS)" $(MAKE) -C $(FPGA_DIR) mcs
-	cp $(BUILD_DIR)/$(MODEL)/obj/system.mcs $@
+mcs := $(BUILD_DIR)/obj/$(MODEL).mcs
+$(mcs): $(bit)
+	cd $(BUILD_DIR); vivado -nojournal -mode batch -source $(fpga_common_script_dir)/write_cfgmem.tcl -tclargs $(BOARD) $@ $<
 
 .PHONY: mcs
 mcs: $(mcs)

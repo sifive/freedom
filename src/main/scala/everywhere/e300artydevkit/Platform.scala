@@ -8,9 +8,9 @@ import freechips.rocketchip.coreplex._
 import freechips.rocketchip.devices.debug._
 import freechips.rocketchip.devices.tilelink._
 import freechips.rocketchip.diplomacy._
+import freechips.rocketchip.util.ResetCatchAndSync
 import freechips.rocketchip.system._
 
-import sifive.blocks.util.{ResetCatchAndSync}
 import sifive.blocks.devices.mockaon._
 import sifive.blocks.devices.gpio._
 import sifive.blocks.devices.jtag._
@@ -82,10 +82,10 @@ class E300ArtyDevKitPlatform(implicit val p: Parameters) extends Module {
   val spi_pins  = sys.outer.spiParams.map  { c => Wire(new SPIPins(() => PinGen(), c))}
   val i2c_pins  = sys.outer.i2cParams.map  { c => Wire(new I2CPins(() => PinGen()))}
 
-  (uart_pins zip  sys_uart) map {case (p, r) => p.fromPort(r, clock = clock, reset = reset, syncStages = 0)}
-  (pwm_pins  zip  sys_pwm)  map {case (p, r) => p.fromPort(r)}
-  (spi_pins  zip  sys_spi)  map {case (p, r) => p.fromPort(r, clock = clock, reset = reset, syncStages = 0)}
-  (i2c_pins  zip  sys_i2c)  map {case (p, r) => p.fromPort(r, clock = clock, reset = reset, syncStages = 0)}
+  (uart_pins zip  sys_uart) map {case (p, r) => UARTPinsFromPort(p, r, clock = clock, reset = reset, syncStages = 0)}
+  (pwm_pins  zip  sys_pwm)  map {case (p, r) => PWMPinsFromPort(p, r) }
+  (spi_pins  zip  sys_spi)  map {case (p, r) => SPIPinsFromPort(p, r, clock = clock, reset = reset, syncStages = 0)}
+  (i2c_pins  zip  sys_i2c)  map {case (p, r) => I2CPinsFromPort(p, r, clock = clock, reset = reset, syncStages = 0)}
 
   //-----------------------------------------------------------------------
   // Default Pin connections before attaching pinmux
@@ -157,14 +157,14 @@ class E300ArtyDevKitPlatform(implicit val p: Parameters) extends Module {
   //-----------------------------------------------------------------------
 
   // Result of Pin Mux
-  io.pins.gpio.fromPort(sys.gpio(0))
+  GPIOPinsFromPort(io.pins.gpio, sys.gpio(0))
 
   // Dedicated SPI Pads
-  io.pins.qspi.fromPort(sys.qspi(0), clock = sys.clock, reset = sys.reset, syncStages = 3)
+  SPIPinsFromPort(io.pins.qspi, sys.qspi(0), clock = sys.clock, reset = sys.reset, syncStages = 3)
 
   // JTAG Debug Interface
   val sjtag = sys.debug.systemjtag.get
-  io.pins.jtag.fromPort(sjtag.jtag)
+  JTAGPinsFromPort(io.pins.jtag, sjtag.jtag)
   sjtag.reset := io.jtag_reset
   sjtag.mfr_id := p(JtagDTMKey).idcodeManufId.U(11.W)
 
