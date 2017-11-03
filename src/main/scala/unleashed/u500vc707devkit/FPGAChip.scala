@@ -29,7 +29,6 @@ object PinGen {
 
 class U500VC707DevKitFPGAChip(implicit override val p: Parameters)
     extends VC707Shell
-    with HasPCIe
     with HasDDR3
     with HasDebugJTAG {
 
@@ -49,7 +48,6 @@ class U500VC707DevKitFPGAChip(implicit override val p: Parameters)
     connectDebugJTAG(dut)
     connectSPI      (dut)
     connectUART     (dut)
-    connectPCIe     (dut)
     connectMIG      (dut)
 
     //---------------------------------------------------------------------
