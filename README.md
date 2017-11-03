@@ -44,6 +44,8 @@ $ make -f Makefile.e300artydevkit verilog
 $ make -f Makefile.e300artydevkit mcs
 ```
 
+Note: This flow requires vivado 2017.1. Old versions are known to fail.
+
 These will place the files under `builds/e300artydevkit/obj`.
 
 Note that in order to run the `mcs` target, you need to have the `vivado`
@@ -76,6 +78,8 @@ To execute these targets, you can run the following commands:
 $ make -f Makefile.u500vc707devkit verilog
 $ make -f Makefile.u500vc707devkit mcs
 ```
+
+Note: This flow requires vivado 2016.1. Newer versions are known to fail.
 
 These will place the files under `builds/u500vc707devkit/obj`.
 
