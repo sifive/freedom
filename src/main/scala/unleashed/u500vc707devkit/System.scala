@@ -28,8 +28,7 @@ class U500VC707DevKitSystem(implicit p: Parameters) extends RocketCoreplex
     with HasPeripheryUART
     with HasPeripherySPI
     with HasPeripheryGPIO
-    with HasMemoryXilinxVC707MIG
-    with HasSystemXilinxVC707PCIeX1 {
+    with HasMemoryXilinxVC707MIG {
   override lazy val module = new U500VC707DevKitSystemModule(this)
 }
 
@@ -40,8 +39,7 @@ class U500VC707DevKitSystemModule[+L <: U500VC707DevKitSystem](_outer: L)
     with HasPeripheryUARTModuleImp
     with HasPeripherySPIModuleImp
     with HasPeripheryGPIOModuleImp
-    with HasMemoryXilinxVC707MIGModuleImp
-    with HasSystemXilinxVC707PCIeX1ModuleImp {
+    with HasMemoryXilinxVC707MIGModuleImp {
   // Reset vector is set to the location of the mask rom
   val maskROMParams = p(PeripheryMaskROMKey)
   global_reset_vector := maskROMParams(0).address.U
