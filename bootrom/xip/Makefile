@@ -5,8 +5,8 @@ OBJCOPY=$(RISCV)/bin/riscv64-unknown-elf-objcopy
 CFLAGS=-march=rv32imac -mabi=ilp32 -O2 -std=gnu11 -Wall -I. -nostartfiles -fno-common -g
 LFLAGS=-static -nostdlib
 
-dtb := $(BUILD_DIR)/$(CONFIG).dtb
-$(dtb): $(BUILD_DIR)/$(CONFIG).dts
+dtb := $(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).dtb
+$(dtb): $(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).dts
 	dtc -I dts -O dtb -o $@ $<
 
 .PHONY: dtb

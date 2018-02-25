@@ -26,11 +26,11 @@ class FreedomUVC707Config extends Config(
 // Freedom U500 VC707 Dev Kit Peripherals
 class U500VC707DevKitPeripherals extends Config((site, here, up) => {
   case PeripheryUARTKey => List(
-    UARTParams(address = BigInt(0x54000000L)))
+    UARTParams(address = BigInt(0x64000000L)))
   case PeripherySPIKey => List(
-    SPIParams(rAddress = BigInt(0x54001000L)))
+    SPIParams(rAddress = BigInt(0x64001000L)))
   case PeripheryGPIOKey => List(
-    GPIOParams(address = BigInt(0x54002000L), width = 4))
+    GPIOParams(address = BigInt(0x64002000L), width = 4))
   case PeripheryMaskROMKey => List(
     MaskROMParams(address = 0x10000, name = "BootROM"))
 })
@@ -40,7 +40,7 @@ class U500VC707DevKitConfig extends Config(
   new WithNExtTopInterrupts(0)   ++
   new U500VC707DevKitPeripherals ++
   new FreedomUVC707Config().alter((site,here,up) => {
-    case ErrorParams => ErrorParams(Seq(AddressSet(0x3000, 0xfff)))
+    case ErrorParams => ErrorParams(Seq(AddressSet(0x3000, 0xfff)), maxAtomic=site(XLen)/8, maxTransfer=128)
     case PeripheryBusKey => up(PeripheryBusKey, site).copy(frequency = 50000000) // 50 MHz hperiphery
     case MemoryXilinxDDRKey => XilinxVC707MIGParams(address = Seq(AddressSet(0x80000000L,0x40000000L-1))) //1GB
     case DTSTimebase => BigInt(1000000)
