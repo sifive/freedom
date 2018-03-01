@@ -10,9 +10,6 @@ import freechips.rocketchip.diplomacy._
 import sifive.blocks.devices.gpio._
 import sifive.blocks.devices.pinctrl.{BasePin}
 
-//import sifive.fpgashells.shell.xilinx.vc707shell._
-import sifive.fpgashells.ip.xilinx.{IOBUF}
-
 import sifive.fpgashells.devices.microsemi.polarfireddr4._
 import sifive.fpgashells.shell.microsemi.polarfireevalkitshell._
 
@@ -33,7 +30,7 @@ object PinGen {
 
 class U500PolarFireEvalKitFPGAChip(implicit override val p: Parameters)
     extends PolarFireEvalKitShell
-//    with HasPCIe
+    with HasPCIe
     with HasDDR3 {
 
   //-----------------------------------------------------------------------
@@ -50,9 +47,9 @@ class U500PolarFireEvalKitFPGAChip(implicit override val p: Parameters)
     //---------------------------------------------------------------------
 
     connectDebugJTAG(dut)
-//    connectSPI      (dut)
+    connectSPI      (dut)
     connectUART     (dut)
-//    connectPCIe     (dut)
+    connectPCIe     (dut)
     connectMIG      (dut)
 
     //---------------------------------------------------------------------

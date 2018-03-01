@@ -20,7 +20,7 @@ import sifive.fpgashells.devices.microsemi.polarfireddr4.{MemoryMicrosemiDDR4Key
 class FreedomUPolarFireEvalKitConfig extends Config(
   new WithJtagDTM            ++
   new WithNMemoryChannels(1) ++
-  new WithNBigCores(4)       ++
+  new WithNBigCores(1)       ++
   new BaseConfig
 )
 
@@ -44,7 +44,7 @@ class U500PolarFireEvalKitConfig extends Config(
     case ErrorParams => ErrorParams(Seq(AddressSet(0x3000, 0xfff)))
     case PeripheryBusKey => up(PeripheryBusKey, site).copy(frequency = 50000000) // 50 MHz hperiphery
     case MemoryMicrosemiDDR3Key => PolarFireEvalKitDDR3Params(address = Seq(AddressSet(0x80000000L,0x40000000L-1))) //1GB
-    case MemoryMicrosemiDDR4Key => PolarFireEvalKitDDR4Params(address = Seq(AddressSet(0x80000000L,0x40000000L-1))) //1GB
+//    case MemoryMicrosemiDDR4Key => PolarFireEvalKitDDR4Params(address = Seq(AddressSet(0x80000000L,0x40000000L-1))) //1GB
     case DTSTimebase => BigInt(1000000)
     case ExtMem => up(ExtMem).copy(size = 0x40000000L)
     case JtagDTMKey => new JtagDTMConfig (
@@ -54,18 +54,3 @@ class U500PolarFireEvalKitConfig extends Config(
       debugIdleCycles = 5)    // Reasonable guess for synchronization
   })
 )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

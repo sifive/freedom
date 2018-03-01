@@ -16,6 +16,7 @@ import sifive.blocks.devices.uart._
 
 import sifive.fpgashells.devices.microsemi.polarfireddr3._
 import sifive.fpgashells.devices.microsemi.polarfireddr4._
+import sifive.fpgashells.devices.microsemi.polarfireevalkitpciex4._
 
 //-------------------------------------------------------------------------
 // U500PolarFireEvalKitSystem
@@ -30,7 +31,7 @@ class U500PolarFireEvalKitSystem(implicit p: Parameters) extends RocketCoreplex
     with HasPeripheryGPIO
 //    with HasMemoryPolarFireEvalKitDDR4
     with HasMemoryPolarFireEvalKitDDR3
-    {
+    with HasSystemPolarFireEvalKitPCIeX4 {
   override lazy val module = new U500PolarFireEvalKitSystemModule(this)
 }
 
@@ -43,8 +44,9 @@ class U500PolarFireEvalKitSystemModule[+L <: U500PolarFireEvalKitSystem](_outer:
     with HasPeripheryGPIOModuleImp
 //    with HasMemoryPolarFireEvalKitDDR4ModuleImp
     with HasMemoryPolarFireEvalKitDDR3ModuleImp
-    {
+    with HasSystemPolarFireEvalKitPCIeX4ModuleImp {
   // Reset vector is set to the location of the mask rom
   val maskROMParams = p(PeripheryMaskROMKey)
-  global_reset_vector := maskROMParams(0).address.U
+//  global_reset_vector := maskROMParams(0).address.U
+  global_reset_vector := BigInt(0x80000000L).U
 }
