@@ -44,7 +44,7 @@ $ make -f Makefile.e300artydevkit verilog
 $ make -f Makefile.e300artydevkit mcs
 ```
 
-Note: This flow requires vivado 2017.1. Old versions are known to fail.
+Note: This flow requires Vivado 2017.1. Old versions are known to fail.
 
 These will place the files under `builds/e300artydevkit/obj`.
 
@@ -82,7 +82,7 @@ $ make -f Makefile.u500vc707devkit verilog
 $ make -f Makefile.u500vc707devkit mcs
 ```
 
-Note: This flow requires vivado 2016.1. Newer versions are known to fail.
+Note: This flow requires Vivado 2016.4. Newer versions are known to fail.
 
 These will place the files under `builds/u500vc707devkit/obj`.
 
