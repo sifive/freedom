@@ -7,8 +7,8 @@ CFLAGS+= -fno-common -g -DENTROPY=0 -mabi=lp64 -DNONSMP_HART=0
 CFLAGS+= -I $(BOOTROM_DIR)/include -I.
 LFLAGS=-static -nostdlib -L $(BOOTROM_DIR)/linker -T sdboot.elf.lds
 
-dtb := $(BUILD_DIR)/$(CONFIG).dtb
-$(dtb): $(BUILD_DIR)/$(CONFIG).dts
+dtb := $(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).dtb
+$(dtb): $(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).dts
 	dtc -I dts -O dtb -o $@ $<
 
 .PHONY: dtb

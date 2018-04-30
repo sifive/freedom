@@ -30,7 +30,8 @@ object PinGen {
 class U500VC707DevKitFPGAChip(implicit override val p: Parameters)
     extends VC707Shell
     with HasPCIe
-    with HasDDR3 {
+    with HasDDR3
+    with HasDebugJTAG {
 
   //-----------------------------------------------------------------------
   // DUT

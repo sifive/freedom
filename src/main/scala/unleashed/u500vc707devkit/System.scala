@@ -4,7 +4,7 @@ package sifive.freedom.unleashed.u500vc707devkit
 import Chisel._
 
 import freechips.rocketchip.config._
-import freechips.rocketchip.coreplex._
+import freechips.rocketchip.subsystem._
 import freechips.rocketchip.devices.debug._
 import freechips.rocketchip.devices.tilelink._
 import freechips.rocketchip.diplomacy._
@@ -21,7 +21,7 @@ import sifive.fpgashells.devices.xilinx.xilinxvc707pciex1._
 // U500VC707DevKitSystem
 //-------------------------------------------------------------------------
 
-class U500VC707DevKitSystem(implicit p: Parameters) extends RocketCoreplex
+class U500VC707DevKitSystem(implicit p: Parameters) extends RocketSubsystem
     with HasPeripheryMaskROMSlave
     with HasPeripheryDebug
     with HasSystemErrorSlave
@@ -34,7 +34,7 @@ class U500VC707DevKitSystem(implicit p: Parameters) extends RocketCoreplex
 }
 
 class U500VC707DevKitSystemModule[+L <: U500VC707DevKitSystem](_outer: L)
-  extends RocketCoreplexModule(_outer)
+  extends RocketSubsystemModuleImp(_outer)
     with HasRTCModuleImp
     with HasPeripheryDebugModuleImp
     with HasPeripheryUARTModuleImp

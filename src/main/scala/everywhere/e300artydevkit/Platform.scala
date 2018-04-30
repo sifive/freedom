@@ -4,7 +4,7 @@ package sifive.freedom.everywhere.e300artydevkit
 import Chisel._
 
 import freechips.rocketchip.config._
-import freechips.rocketchip.coreplex._
+import freechips.rocketchip.subsystem._
 import freechips.rocketchip.devices.debug._
 import freechips.rocketchip.devices.tilelink._
 import freechips.rocketchip.diplomacy._

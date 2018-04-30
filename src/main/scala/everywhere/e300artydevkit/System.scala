@@ -4,7 +4,7 @@ package sifive.freedom.everywhere.e300artydevkit
 import Chisel._
 
 import freechips.rocketchip.config._
-import freechips.rocketchip.coreplex._
+import freechips.rocketchip.subsystem._
 import freechips.rocketchip.devices.debug._
 import freechips.rocketchip.devices.tilelink._
 import freechips.rocketchip.diplomacy._
@@ -21,7 +21,7 @@ import sifive.blocks.devices.i2c._
 // E300ArtyDevKitSystem
 //-------------------------------------------------------------------------
 
-class E300ArtyDevKitSystem(implicit p: Parameters) extends RocketCoreplex
+class E300ArtyDevKitSystem(implicit p: Parameters) extends RocketSubsystem
     with HasPeripheryMaskROMSlave
     with HasPeripheryDebug
     with HasPeripheryMockAON
@@ -35,7 +35,7 @@ class E300ArtyDevKitSystem(implicit p: Parameters) extends RocketCoreplex
 }
 
 class E300ArtyDevKitSystemModule[+L <: E300ArtyDevKitSystem](_outer: L)
-  extends RocketCoreplexModule(_outer)
+  extends RocketSubsystemModuleImp(_outer)
     with HasPeripheryDebugModuleImp
     with HasPeripheryUARTModuleImp
     with HasPeripherySPIModuleImp
