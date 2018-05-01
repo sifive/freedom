@@ -1,0 +1,22 @@
+# See LICENSE for license details.
+base_dir := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
+BUILD_DIR := $(base_dir)/builds/vera-iofpga
+FPGA_DIR := $(base_dir)/fpga-shells/microsemi
+MODEL := IOFPGAChip
+PROJECT := sifive.freedom.unleashed.vera.iofpga
+export CONFIG_PROJECT := sifive.freedom.unleashed.vera.iofpga
+export CONFIG := IOFPGAConfig
+export BOARD := vera
+
+rocketchip_dir := $(base_dir)/rocket-chip
+sifiveblocks_dir := $(base_dir)/sifive-blocks
+VSRCS := \
+	$(rocketchip_dir)/vsrc/AsyncResetReg.v \
+	$(rocketchip_dir)/vsrc/plusarg_reader.v \
+	$(sifiveblocks_dir)/vsrc/SRLatch.v \
+	$(FPGA_DIR)/common/vsrc/PowerOnResetFPGAOnly.v \
+	$(FPGA_DIR)/$(BOARD)/vsrc/sdio.v \
+	$(FPGA_DIR)/$(BOARD)/vsrc/vc707reset.v \
+	$(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).v
+
+include common.mk
