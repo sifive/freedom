@@ -96,6 +96,14 @@ $(mcs): $(bit)
 .PHONY: mcs
 mcs: $(mcs)
 
+# Build Libero project
+prjx := $(BUILD_DIR)/libero/$(MODEL).prjx
+$(prjx): $(verilog)
+	cd $(BUILD_DIR); libero SCRIPT:$(fpga_common_script_dir)/libero.tcl SCRIPT_ARGS:"$(BUILD_DIR) $(MODEL) $(PROJECT) $(CONFIG) $(BOARD)"
+
+.PHONY: prjx
+prjx: $(prjx)
+
 # Clean
 .PHONY: clean
 clean:
