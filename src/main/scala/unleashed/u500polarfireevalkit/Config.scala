@@ -2,7 +2,8 @@
 package sifive.freedom.unleashed.u500polarfireevalkit
 
 import freechips.rocketchip.config._
-import freechips.rocketchip.coreplex._
+//import freechips.rocketchip.coreplex._
+import freechips.rocketchip.subsystem._
 import freechips.rocketchip.devices.debug._
 import freechips.rocketchip.devices.tilelink._
 import freechips.rocketchip.diplomacy._
@@ -41,7 +42,7 @@ class U500PolarFireEvalKitConfig extends Config(
   new WithNExtTopInterrupts(0)   ++
   new U500PolarFireEvalKitPeripherals ++
   new FreedomUPolarFireEvalKitConfig().alter((site,here,up) => {
-    case ErrorParams => ErrorParams(Seq(AddressSet(0x3000, 0xfff)))
+    case ErrorParams => ErrorParams(Seq(AddressSet(0x3000, 0xfff)), maxAtomic=site(XLen)/8, maxTransfer=128)
     case PeripheryBusKey => up(PeripheryBusKey, site).copy(frequency = 50000000) // 50 MHz hperiphery
     case MemoryMicrosemiDDR3Key => PolarFireEvalKitDDR3Params(address = Seq(AddressSet(0x80000000L,0x40000000L-1))) //1GB
 //    case MemoryMicrosemiDDR4Key => PolarFireEvalKitDDR4Params(address = Seq(AddressSet(0x80000000L,0x40000000L-1))) //1GB
@@ -54,3 +55,4 @@ class U500PolarFireEvalKitConfig extends Config(
       debugIdleCycles = 5)    // Reasonable guess for synchronization
   })
 )
+
