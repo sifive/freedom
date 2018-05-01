@@ -78,7 +78,6 @@ class IOFPGA(
   val xbar = LazyModule(new TLXbar)
   val mbar = LazyModule(new TLXbar)
   val serr = LazyModule(new TLError(ErrorParams(Seq(AddressSet(0x2800000000L, 0xffffffffL)), 8, 128, true), beatBytes = 8))
-//<CJ>  val serr = LazyModule(new TLError(ErrorParams(Seq(AddressSet(0x58000000L, 0x07ffffL)), 8, 128, true), beatBytes = 8))
   val gpio = LazyModule(new TLGPIO(w = 8, c = gpioparams))
   val polarfirepcie = LazyModule(new PolarFireEvalKitPCIeX4)
   val msimaster = LazyModule(new MSIMaster(Seq(MSITarget(address=0x2020000, spacing=4, number=10))))
@@ -142,7 +141,6 @@ class IOFPGA(
 class IOFPGAChip(implicit override val p: Parameters) extends VeraShell
   with HasPFEvalKitChipLink {
 
-//  val ddrParams = PolarFireEvalKitDDR3Params(address = Seq(AddressSet(0x3000000000L, 0xFFFFFFFFL)))  // 192GB - 196GB (behind L2)
   val chipLinkParams = ChipLinkParams(
         TLUH = AddressSet.misaligned(0,             0x40000000L),                   // Aloe MMIO              [  0GB, 1GB)
         TLC =  AddressSet.misaligned(0x60000000L,   0x20000000L) ++                 // local memory behind L2 [1.5GB, 2GB)
@@ -152,13 +150,8 @@ class IOFPGAChip(implicit override val p: Parameters) extends VeraShell
   )
   val localRoute = AddressSet.misaligned(0x40000000L, 0x20000000L) ++               // local MMIO             [  1GB, 1.5GB)
                    AddressSet.misaligned(0x2000000000L, 0x1000000000L)              // local MMIO             [128GB, 192GB)
-//<CJ>  val localRoute = AddressSet.misaligned(0x40000000L, 0x10000000L) ++               // local MMIO             [  1GB, 1.5GB)
-//<CJ>                   AddressSet.misaligned(0x50000000L, 0x10000000L)              // local MMIO             [128GB, 192GB)
 //  val gpioParams = GPIOParams(address = BigInt(0x2400000000L), width = 4)
   val gpioParams = GPIOParams(address = BigInt(0x2400000000L), width = 8)
-
-  // ChipLink skew RX clock
-//<CJ>TODO  val vc707_sys_clock_mmcm3 = Module(new vc707_sys_clock_mmcm3)
 
   //-----------------------------------------------------------------------
   // DUT
@@ -171,6 +164,15 @@ class IOFPGAChip(implicit override val p: Parameters) extends VeraShell
   val pcie = IO(new PolarFireEvalKitPCIeX4Pads)
 
   withClockAndReset(dut_clock, dut_reset) {
+
+    // PCIe switch reset:
+    val timer = RegInit(UInt(268435456, width=29))
+//    val timer = RegInit(UInt(16383, width=15))
+    timer := timer - timer.orR
+  
+    val pf_rstb_i = !ResetCatchAndSync(pcie_fab_ref_clk, !sys_reset_n || timer.orR)
+    led3 := pf_rstb_i
+    pf_rstb := pf_rstb_i
 
 //    val iofpga = Module(LazyModule(new IOFPGA(localRoute,ddrParams,chipLinkParams,gpioParams)).module)
     val iofpga = Module(LazyModule(new IOFPGA(localRoute,chipLinkParams,gpioParams)).module)
@@ -219,14 +221,6 @@ class IOFPGAChip(implicit override val p: Parameters) extends VeraShell
 
     iofpga.io.rxlocked := hart_clk_lock
     
-/*
-    debug_io0 := iofpga.io.chiplink.b2c.rst
-    debug_io1 := iofpga.io.chiplink.b2c.clk
-    debug_io2 := iofpga.io.chiplink.b2c.send
-    debug_io3 := iofpga.io.chiplink.c2b.rst
-    debug_io4 := iofpga.io.chiplink.c2b.clk
-    debug_io5 := iofpga.io.chiplink.c2b.send
-*/  
     led2 := iofpga.io.link_up
     
     //---------------------------------------------------------------------
@@ -244,11 +238,6 @@ class IOFPGAChip(implicit override val p: Parameters) extends VeraShell
     gpio_pins.pins(5).i.ival := Bool(false)
     gpio_pins.pins(6).i.ival := Bool(true)
     gpio_pins.pins(7).i.ival := Bool(true)
-    
-//<CJ>TODO    gpio_pins.pins.foreach { _.i.ival := Bool(false) }
-//<CJ>TODO    gpio_pins.pins.zipWithIndex.foreach {
-//<CJ>TODO      case(pin, idx) => led(idx) := pin.o.oval
-//<CJ>TODO    }
   }
 
 }
