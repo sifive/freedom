@@ -123,7 +123,7 @@ class IOFPGA(
     timer := timer - timer.orR
 
     // Report link-up once we see a 'send' send
-    io.link_up := RegNext(io.link_up || (!timer.orR && !io.chiplink.b2c.rst && io.chiplink.b2c.send), Bool(false))
+    io.link_up := !io.chiplink.b2c.rst
 
     io.chiplink <> link.module.io.port
 
@@ -180,7 +180,7 @@ class IOFPGAChip(implicit override val p: Parameters) extends VeraShell
     //---------------------------------------------------------------------
     // PCIe
     //---------------------------------------------------------------------
-    iofpga.io.polarfirepcie.APB_S_PCLK     := dut_clock
+    iofpga.io.polarfirepcie.APB_S_PCLK     := hart_clk
    
     iofpga.io.polarfirepcie.APB_S_PRESET_N := sys_reset_n   //!dut_reset //UInt("b1")
     
