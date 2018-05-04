@@ -81,7 +81,8 @@ class IOFPGA(
   val gpio = LazyModule(new TLGPIO(w = 8, c = gpioparams))
   val polarfirepcie = LazyModule(new PolarFireEvalKitPCIeX4)
   val msimaster = LazyModule(new MSIMaster(Seq(MSITarget(address=0x2020000, spacing=4, number=10))))
-
+  val test_ram  = LazyModule(new TLRAM(AddressSet(0x2500000000L, 0x3fff), beatBytes = 8))
+  
   private def filter(m: TLManagerParameters) = // keep only managers that are locally routed
     if (m.address.exists(a => localRoute.exists(_.overlaps(a)))) Some(m) else None
 
@@ -102,6 +103,7 @@ class IOFPGA(
   gpio.node := TLFragmenter(8,64,true) := sbar.node
   polarfirepcie.slave := polarfirepcie.crossTLIn := TLWidthWidget(8) := sbar.node
   polarfirepcie.control := polarfirepcie.crossTLIn := TLWidthWidget(8) := sbar.node
+  test_ram.node := TLFragmenter(8, 64) := sbar.node
 
   // interrupts are fed into chiplink via MSI
   msimaster.intNode := polarfirepcie.crossIntOut := polarfirepcie.intnode
