@@ -18,10 +18,10 @@ import sifive.blocks.devices.msi._
 import sifive.blocks.devices.chiplink._
 
 import sifive.fpgashells.shell.microsemi.verashell.{VeraShell,HasPCIe,HasDDR3,HasPFEvalKitChipLink}
-//import sifive.fpgashells.shell.microsemi.polarfireevalkitshell.{PolarFireEvalKitShell,HasPCIe,HasDDR3,HasPFEvalKitChipLink}
 import sifive.fpgashells.devices.microsemi.polarfireevalkitpciex4._
-import sifive.fpgashells.ip.microsemi.{CLKINT}
 import sifive.freedom.unleashed.u500vera.FreedomVeraConfig
+import sifive.fpgashells.ip.microsemi.CLKINT
+import sifive.fpgashells.ip.microsemi.polarfiredll._
 
 //-------------------------------------------------------------------------
 // PinGen
@@ -112,29 +112,33 @@ class IOFPGA(
       val chiplink = new WideDataLayerPort(chiplinkparams)
       val gpio = new GPIOPortIO(gpioparams)
       val polarfirepcie = new PolarFireEvalKitPCIeX4IO
-      val rxlocked = Bool(INPUT)
       val link_up  = Bool(OUTPUT)
+      val dll_up = Bool(OUTPUT)
     })
 
     io.polarfirepcie <> polarfirepcie.module.io.port
 
-    // Hold ChipLink in reset for a bit after power-on
-    val timer = RegInit(UInt(255, width=8))
-    timer := timer - timer.orR
-
-    // Report link-up once we see a 'send' send
-    io.link_up := !io.chiplink.b2c.rst
-
     io.chiplink <> link.module.io.port
 
-    val chiplink_clkint = Module(new CLKINT)
-    chiplink_clkint.io.A := io.chiplink.b2c.clk
-    link.module.io.port.b2c.clk := chiplink_clkint.io.Y
+    val chiplink_rx_clkint = Module(new CLKINT)
+    val chiplink_rx_dll = Module(new PolarFireDLL("chiplink_rx_dll"))
+    chiplink_rx_clkint.io.A := io.chiplink.b2c.clk
+    chiplink_rx_dll.io.DLL_REF_CLK := chiplink_rx_clkint.io.Y
+    chiplink_rx_dll.io.DLL_FB_CLK := chiplink_rx_dll.io.DLL_CLK_0_FABCLK
+    link.module.io.port.b2c.clk := chiplink_rx_dll.io.DLL_CLK_0_FABCLK
+
+    // Hold ChipLink in reset for a bit after power-on
+    val timer = RegInit(UInt(255, width=8))
+    timer := timer - (timer.orR && chiplink_rx_dll.io.DLL_LOCK)
 
     link.module.io.c2b_clk := clock
-    link.module.io.c2b_rst := ResetCatchAndSync(clock, reset || timer.orR || !io.rxlocked)
+    link.module.io.c2b_rst := ResetCatchAndSync(clock, reset || timer.orR)
 
     io.gpio <> gpio.module.io.port
+
+    // Report link-up once RX is out of reset
+    io.link_up := !io.chiplink.b2c.rst
+    io.dll_up  := chiplink_rx_dll.io.DLL_LOCK
   }
 }
 
@@ -219,9 +223,13 @@ class IOFPGAChip(implicit override val p: Parameters) extends VeraShell
     
     constrainChipLink(iofpga=true)
 
-    iofpga.io.rxlocked := hart_clk_lock
-    
+    val counter = RegInit(UInt(255))
+    counter := counter - counter.orR
+
     led2 := iofpga.io.link_up
+    led3 := iofpga.io.dll_up
+    led4 := counter === UInt(0)
+    led5 := Bool(true)
     
     //---------------------------------------------------------------------
     // GPIO
