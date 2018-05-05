@@ -22,6 +22,7 @@ import sifive.fpgashells.devices.microsemi.polarfireevalkitpciex4._
 import sifive.freedom.unleashed.u500vera.FreedomVeraConfig
 import sifive.fpgashells.ip.microsemi.CLKINT
 import sifive.fpgashells.ip.microsemi.polarfiredll._
+import sifive.fpgashells.ip.microsemi.polarfireccc._
 
 //-------------------------------------------------------------------------
 // PinGen
@@ -111,6 +112,7 @@ class IOFPGA(
 
   lazy val module = new LazyModuleImp(this) {
     val io = IO (new Bundle {
+      val tx_clock = Clock(INPUT)
       val chiplink = new WideDataLayerPort(chiplinkparams)
       val gpio = new GPIOPortIO(gpioparams)
       val polarfirepcie = new PolarFireEvalKitPCIeX4IO
@@ -122,16 +124,40 @@ class IOFPGA(
 
     io.chiplink <> link.module.io.port
 
+    // Take the b2c clock from an input pin
     val chiplink_rx_clkint = Module(new CLKINT)
-    val chiplink_rx_dll = Module(new PolarFireDLL("chiplink_rx_dll"))
     chiplink_rx_clkint.io.A := io.chiplink.b2c.clk
+
+/*
+    // Compensate for clock insertion delay on b2c_clk using a DLL
+    val chiplink_rx_dll = Module(new PolarFireDLL("chiplink_rx_dll"))
+    val lock = chiplink_rx_dll.io.DLL_LOCK
     chiplink_rx_dll.io.DLL_REF_CLK := chiplink_rx_clkint.io.Y
     chiplink_rx_dll.io.DLL_FB_CLK := chiplink_rx_dll.io.DLL_CLK_0_FABCLK
     link.module.io.port.b2c.clk := chiplink_rx_dll.io.DLL_CLK_0_FABCLK
+*/
+
+    // Skew the RX clock to sample in the data eye
+    val chiplink_rx_pll = Module(new PolarFireCCC(PolarFireCCCParameters(
+       name = "chiplink_rx_pll",
+//       feedback = true,
+       pll_in_freq     = 125.0,
+       gl0Enabled      = true,
+       gl1Enabled      = true,
+       gl0_0_out_freq  = 125.0,
+       gl1_0_out_freq  = 125.0,
+       gl1_0_pll_phase = 12)))
+    val lock = chiplink_rx_pll.io.PLL_LOCK_0
+    chiplink_rx_pll.io.REF_CLK_0 := chiplink_rx_clkint.io.Y
+    // chiplink_rx_pll.io.FB_CLK := chiplink_rx_pll.io.OUT0_FABCLK_0.get
+    link.module.io.port.b2c.clk := chiplink_rx_pll.io.OUT1_FABCLK_0.get
+
+    // Use a phase-adjusted c2b_clk to meet timing constraints
+    io.chiplink.c2b.clk := io.tx_clock
 
     // Hold ChipLink in reset for a bit after power-on
     val timer = RegInit(UInt(255, width=8))
-    timer := timer - (timer.orR && chiplink_rx_dll.io.DLL_LOCK)
+    timer := timer - (timer.orR && lock)
 
     link.module.io.c2b_clk := clock
     link.module.io.c2b_rst := ResetCatchAndSync(clock, reset || timer.orR)
@@ -140,7 +166,7 @@ class IOFPGA(
 
     // Report link-up once RX is out of reset
     io.link_up := !io.chiplink.b2c.rst
-    io.dll_up  := chiplink_rx_dll.io.DLL_LOCK
+    io.dll_up  := lock
   }
 }
 
@@ -186,7 +212,7 @@ class IOFPGAChip(implicit override val p: Parameters) extends VeraShell
     //---------------------------------------------------------------------
     // PCIe
     //---------------------------------------------------------------------
-    iofpga.io.polarfirepcie.APB_S_PCLK     := hart_clk
+    iofpga.io.polarfirepcie.APB_S_PCLK     := hart_clk_25
    
     iofpga.io.polarfirepcie.APB_S_PRESET_N := sys_reset_n   //!dut_reset //UInt("b1")
     
@@ -221,6 +247,7 @@ class IOFPGAChip(implicit override val p: Parameters) extends VeraShell
     //---------------------------------------------------------------------
     // ChipLink
     //---------------------------------------------------------------------
+    iofpga.io.tx_clock := hart_clk_125_tx
     chiplink <> iofpga.io.chiplink
     
     constrainChipLink(iofpga=true)
