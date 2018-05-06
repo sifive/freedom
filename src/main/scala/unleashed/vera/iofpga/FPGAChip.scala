@@ -136,7 +136,7 @@ class IOFPGA(
        gl1Enabled      = true,
        gl0_0_out_freq  = 125.0,
        gl1_0_out_freq  = 125.0,
-       gl1_0_pll_phase = 12)))
+       gl1_0_pll_phase = 240)))
     val lock = chiplink_rx_pll.io.PLL_LOCK_0
     chiplink_rx_pll.io.REF_CLK_0 := chiplink_rx_clkint.io.Y
     link.module.io.port.b2c.clk := chiplink_rx_pll.io.OUT1_FABCLK_0.get
