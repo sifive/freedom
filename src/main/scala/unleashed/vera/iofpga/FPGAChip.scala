@@ -201,7 +201,7 @@ class IOFPGAChip(implicit override val p: Parameters) extends VeraShell
     //---------------------------------------------------------------------
     // PCIe
     //---------------------------------------------------------------------
-    iofpga.io.polarfirepcie.APB_S_PCLK     := hart_clk_25
+    iofpga.io.polarfirepcie.APB_S_PCLK     := dut_clock
    
     iofpga.io.polarfirepcie.APB_S_PRESET_N := sys_reset_n   //!dut_reset //UInt("b1")
     
