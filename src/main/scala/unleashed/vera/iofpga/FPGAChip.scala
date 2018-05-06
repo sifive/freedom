@@ -128,19 +128,9 @@ class IOFPGA(
     val chiplink_rx_clkint = Module(new CLKINT)
     chiplink_rx_clkint.io.A := io.chiplink.b2c.clk
 
-/*
-    // Compensate for clock insertion delay on b2c_clk using a DLL
-    val chiplink_rx_dll = Module(new PolarFireDLL("chiplink_rx_dll"))
-    val lock = chiplink_rx_dll.io.DLL_LOCK
-    chiplink_rx_dll.io.DLL_REF_CLK := chiplink_rx_clkint.io.Y
-    chiplink_rx_dll.io.DLL_FB_CLK := chiplink_rx_dll.io.DLL_CLK_0_FABCLK
-    link.module.io.port.b2c.clk := chiplink_rx_dll.io.DLL_CLK_0_FABCLK
-*/
-
     // Skew the RX clock to sample in the data eye
     val chiplink_rx_pll = Module(new PolarFireCCC(PolarFireCCCParameters(
        name = "chiplink_rx_pll",
-//       feedback = true,
        pll_in_freq     = 125.0,
        gl0Enabled      = true,
        gl1Enabled      = true,
@@ -149,7 +139,6 @@ class IOFPGA(
        gl1_0_pll_phase = 12)))
     val lock = chiplink_rx_pll.io.PLL_LOCK_0
     chiplink_rx_pll.io.REF_CLK_0 := chiplink_rx_clkint.io.Y
-    // chiplink_rx_pll.io.FB_CLK := chiplink_rx_pll.io.OUT0_FABCLK_0.get
     link.module.io.port.b2c.clk := chiplink_rx_pll.io.OUT1_FABCLK_0.get
 
     // Use a phase-adjusted c2b_clk to meet timing constraints
