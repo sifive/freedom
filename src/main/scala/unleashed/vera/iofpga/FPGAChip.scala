@@ -24,6 +24,8 @@ import sifive.fpgashells.ip.microsemi.CLKINT
 import sifive.fpgashells.ip.microsemi.polarfiredll._
 import sifive.fpgashells.ip.microsemi.polarfireccc._
 
+import sifive.fpgashells.devices.microsemi.polarfireddr4._
+
 //-------------------------------------------------------------------------
 // PinGen
 //-------------------------------------------------------------------------
@@ -70,7 +72,7 @@ class ShadowRAMHack(implicit p: Parameters) extends LazyModule
 
 class IOFPGA(
   localRoute:     Seq[AddressSet],
-//  ddrparams:      PolarFireEvalKitDDR3Params,
+  ddrparams:      PolarFireEvalKitDDR4Params,
   chiplinkparams: ChipLinkParams,
   gpioparams:     GPIOParams)(implicit p: Parameters) extends LazyModule
 {
@@ -83,6 +85,7 @@ class IOFPGA(
   val polarfirepcie = LazyModule(new PolarFireEvalKitPCIeX4)
   val msimaster = LazyModule(new MSIMaster(Seq(MSITarget(address=0x2020000, spacing=4, number=10))))
   val test_ram  = LazyModule(new TLRAM(AddressSet(0x2500000000L, 0x3fff), beatBytes = 8))
+  val pf_ddr4 = LazyModule(new PolarFireEvalKitDDR4(ddrparams))
   
   private def filter(m: TLManagerParameters) = // keep only managers that are locally routed
     if (m.address.exists(a => localRoute.exists(_.overlaps(a)))) Some(m) else None
@@ -105,6 +108,7 @@ class IOFPGA(
   polarfirepcie.slave := polarfirepcie.crossTLIn := TLWidthWidget(8) := sbar.node
   polarfirepcie.control := polarfirepcie.crossTLIn := TLWidthWidget(8) := sbar.node
   test_ram.node := TLFragmenter(8, 64) := sbar.node
+  pf_ddr4.node := sbar.node
 
   // interrupts are fed into chiplink via MSI
   msimaster.intNode := polarfirepcie.crossIntOut := polarfirepcie.intnode
@@ -118,9 +122,11 @@ class IOFPGA(
       val polarfirepcie = new PolarFireEvalKitPCIeX4IO
       val link_up  = Bool(OUTPUT)
       val dll_up = Bool(OUTPUT)
+      val pf_ddr4 = new PolarFireEvalKitDDR4IO(AddressRange.fromSets(ddrparams.address).head.size)
     })
 
     io.polarfirepcie <> polarfirepcie.module.io.port
+    io.pf_ddr4 <> pf_ddr4.module.io.port
 
     io.chiplink <> link.module.io.port
 
@@ -173,6 +179,7 @@ class IOFPGAChip(implicit override val p: Parameters) extends VeraShell
                    AddressSet.misaligned(0x2000000000L, 0x1000000000L)              // local MMIO             [128GB, 192GB)
 //  val gpioParams = GPIOParams(address = BigInt(0x2400000000L), width = 4)
   val gpioParams = GPIOParams(address = BigInt(0x2400000000L), width = 8)
+  val ddrParams = PolarFireEvalKitDDR4Params(address = Seq(AddressSet(0x2600000000L,0x40000000L-1)))
 
   //-----------------------------------------------------------------------
   // DUT
@@ -183,6 +190,7 @@ class IOFPGAChip(implicit override val p: Parameters) extends VeraShell
   dut_ext_reset_n := ereset_n
 
   val pcie = IO(new PolarFireEvalKitPCIeX4Pads)
+  val ddr = IO(new PolarFireEvalKitDDR4Pads(ddrParams))
 
   withClockAndReset(dut_clock, dut_reset) {
 
@@ -192,11 +200,18 @@ class IOFPGAChip(implicit override val p: Parameters) extends VeraShell
     timer := timer - timer.orR
   
     val pf_rstb_i = !ResetCatchAndSync(pcie_fab_ref_clk, !sys_reset_n || timer.orR)
-    led3 := pf_rstb_i
-    pf_rstb := pf_rstb_i
+    led3            := pf_rstb_i
+    pf_rstb         := pf_rstb_i
+    
+    // PCIe slots reset
+    perst_x1_slot   := pf_rstb_i
+    perst_x16_slot  := pf_rstb_i
+    perst_m2_slot   := pf_rstb_i
+    perst_sata_slot := pf_rstb_i
 
 //    val iofpga = Module(LazyModule(new IOFPGA(localRoute,ddrParams,chipLinkParams,gpioParams)).module)
-    val iofpga = Module(LazyModule(new IOFPGA(localRoute,chipLinkParams,gpioParams)).module)
+//    val iofpga = Module(LazyModule(new IOFPGA(localRoute,chipLinkParams,gpioParams)).module)
+    val iofpga = Module(LazyModule(new IOFPGA(localRoute,ddrParams,chipLinkParams,gpioParams)).module)
 
     //---------------------------------------------------------------------
     // PCIe
@@ -232,7 +247,21 @@ class IOFPGAChip(implicit override val p: Parameters) extends VeraShell
     debug_io4 := iofpga.io.polarfirepcie.debug_paddr2
     debug_io5 := iofpga.io.polarfirepcie.debug_paddr3
     
+     //---------------------------------------------------------------------
+    // DDR
+    //---------------------------------------------------------------------
+    iofpga.io.pf_ddr4.PLL_REF_CLK := ref_clk_int.io.Y
+    iofpga.io.pf_ddr4.SYS_RESET_N := sys_reset_n
     
+//    := iofpga.io.pf_ddr4.SYS_CLK
+    ddr_pll_lock  := iofpga.io.pf_ddr4.PLL_LOCK
+    
+    ddr_ready  := iofpga.io.pf_ddr4.CTRLR_READY
+    led5 := ddr_ready
+    
+    ddr <> iofpga.io.pf_ddr4
+
+   
     //---------------------------------------------------------------------
     // ChipLink
     //---------------------------------------------------------------------
@@ -247,7 +276,7 @@ class IOFPGAChip(implicit override val p: Parameters) extends VeraShell
     led2 := iofpga.io.link_up
     led3 := iofpga.io.dll_up
     led4 := counter === UInt(0)
-    led5 := Bool(true)
+//    led5 := Bool(true)
     
     //---------------------------------------------------------------------
     // GPIO
