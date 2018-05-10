@@ -46,7 +46,7 @@ class U500VC707DevKitFPGAChip(implicit override val p: Parameters)
     // Connect peripherals
     //---------------------------------------------------------------------
 
-//    connectDebugJTAG(dut)
+    connectDebugJTAG(dut)
     connectSPI      (dut)
     connectUART     (dut)
     connectPCIe     (dut)
