@@ -28,11 +28,11 @@ class FreedomUPolarFireEvalKitConfig extends Config(
 // Freedom U500 PolarFire Eval Kit Peripherals
 class U500PolarFireEvalKitPeripherals extends Config((site, here, up) => {
   case PeripheryUARTKey => List(
-    UARTParams(address = BigInt(0x54000000L)))
+    UARTParams(address = BigInt(0x64000000L)))
   case PeripherySPIKey => List(
-    SPIParams(rAddress = BigInt(0x54001000L)))
+    SPIParams(rAddress = BigInt(0x64001000L)))
   case PeripheryGPIOKey => List(
-    GPIOParams(address = BigInt(0x54002000L), width = 4))
+    GPIOParams(address = BigInt(0x64002000L), width = 4))
   case PeripheryMaskROMKey => List(
     MaskROMParams(address = 0x10000, name = "BootROM"))
 })
