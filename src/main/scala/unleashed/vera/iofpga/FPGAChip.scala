@@ -25,6 +25,7 @@ import sifive.fpgashells.ip.microsemi.polarfiredll._
 import sifive.fpgashells.ip.microsemi.polarfireccc._
 
 import sifive.fpgashells.devices.microsemi.polarfireddr4._
+import sifive.fpgashells.clocks._
 
 //-------------------------------------------------------------------------
 // PinGen
@@ -135,14 +136,12 @@ class IOFPGA(
     chiplink_rx_clkint.io.A := io.chiplink.b2c.clk
 
     // Skew the RX clock to sample in the data eye
-    val chiplink_rx_pll = Module(new PolarFireCCC(PolarFireCCCParameters(
-       name = "chiplink_rx_pll",
-       pll_in_freq     = 125.0,
-       gl0Enabled      = true,
-       gl1Enabled      = true,
-       gl0_0_out_freq  = 125.0,
-       gl1_0_out_freq  = 125.0,
-       gl1_0_pll_phase = 240)))
+    val chiplink_rx_pll = Module(new PolarFireCCC(PLLParameters(
+        name = "chiplink_rx_pll",
+        InClockParameters(125), 
+        Seq(OutClockParameters(freqMHz=125),
+        OutClockParameters(freqMHz=125, phaseDeg = 240)))))
+
     val lock = chiplink_rx_pll.io.PLL_LOCK_0
     chiplink_rx_pll.io.REF_CLK_0 := chiplink_rx_clkint.io.Y
     link.module.io.port.b2c.clk := chiplink_rx_pll.io.OUT1_FABCLK_0.get

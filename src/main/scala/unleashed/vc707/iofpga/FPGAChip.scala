@@ -18,9 +18,10 @@ import sifive.blocks.devices.msi._
 import sifive.blocks.devices.chiplink._
 
 import sifive.fpgashells.shell.xilinx.vc707shell.{VC707Shell,HasPCIe,HasDDR3,HasVC707ChipLink}
-import sifive.fpgashells.ip.xilinx.{IOBUF,vc707_sys_clock_mmcm3}
+import sifive.fpgashells.ip.xilinx.{IOBUF,Series7MMCM}
 import sifive.fpgashells.devices.xilinx.xilinxvc707mig._
 import sifive.fpgashells.devices.xilinx.xilinxvc707pciex1._
+import sifive.fpgashells.clocks._
 
 import sifive.freedom.unleashed.u500vc707devkit.FreedomUVC707Config
 
@@ -142,7 +143,7 @@ class IOFPGA(
 class IOFPGAChip(implicit override val p: Parameters) extends VC707Shell
   with HasVC707ChipLink {
 
-  val ddrParams = XilinxVC707MIGParams(address = Seq(AddressSet(0x3000000000L, 0xFFFFFFFFL)))  // 192GB - 196GB (behind L2)
+  val ddrParams = XilinxVC707MIGParams(address = Seq(AddressSet(0x3000000000L, 0xFFFFFFFFL)))  // 192GB - 196GB (behind L2);
   val chipLinkParams = ChipLinkParams(
         TLUH = AddressSet.misaligned(0,             0x40000000L),                   // Aloe MMIO              [  0GB, 1GB)
         TLC =  AddressSet.misaligned(0x60000000L,   0x20000000L) ++                 // local memory behind L2 [1.5GB, 2GB)
@@ -152,10 +153,13 @@ class IOFPGAChip(implicit override val p: Parameters) extends VC707Shell
   )
   val localRoute = AddressSet.misaligned(0x40000000L, 0x20000000L) ++               // local MMIO             [  1GB, 1.5GB)
                    AddressSet.misaligned(0x2000000000L, 0x1000000000L)              // local MMIO             [128GB, 192GB)
-  val gpioParams = GPIOParams(address = BigInt(0x2400000000L), width = 4)
+  val gpioParams = GPIOParams(address = BigInt(0x2400000000L), width = 4);
 
   // ChipLink skew RX clock
-  val vc707_sys_clock_mmcm3 = Module(new vc707_sys_clock_mmcm3)
+  val vc707_sys_clock_mmcm3 = Module(new Series7MMCM(PLLParameters(
+      "vc707_sys_clock_mmcm3",
+      InClockParameters(freqMHz=100), 
+      Seq(OutClockParameters(freqMHz=100, phaseDeg=180)))))
 
   //-----------------------------------------------------------------------
   // DUT
@@ -206,7 +210,10 @@ class IOFPGAChip(implicit override val p: Parameters) extends VC707Shell
 
     vc707_sys_clock_mmcm3.io.reset   := reset
     vc707_sys_clock_mmcm3.io.clk_in1 := chiplink.b2c.clk.asUInt.toBool
-    iofpga.io.chiplink.b2c.clk := vc707_sys_clock_mmcm3.io.clk_out1
+    iofpga.io.chiplink.b2c.clk := vc707_sys_clock_mmcm3.getClocks(0)
+
+
+
     iofpga.io.rxlocked := vc707_sys_clock_mmcm3.io.locked
 
     //---------------------------------------------------------------------
