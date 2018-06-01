@@ -113,6 +113,12 @@ class IOFPGA(
   msimaster.intNode := xilinxvc707pcie.crossIntOut := xilinxvc707pcie.intnode
   msimaster.intNode := gpio.intnode
 
+  val sysPLL = p(PLLKey)()
+  val coreGroup = ClockGroup()
+  val sysClock = ClockSourceNode(freqMHz = 25, jitterPS = 10)
+  val clock125_180 = ClockSinkNode(freqMHz = 125, phaseDeg = 180)
+  clock125_180 := coreGroup := sysPLL := sysClock
+
   lazy val module = new LazyModuleImp(this) {
     val io = IO (new Bundle {
       val chiplink = new WideDataLayerPort(chiplinkparams)
@@ -174,7 +180,11 @@ class IOFPGAChip(implicit override val p: Parameters) extends VC707Shell
 
   withClockAndReset(dut_clock, dut_reset) {
 
-    val iofpga = Module(LazyModule(new IOFPGA(localRoute,ddrParams,chipLinkParams,gpioParams)).module)
+    val pll = LazyModule(new PLLFactory(8, p => Module(new Series7MMCM(p))))
+    val iofpga = Module(LazyModule(new IOFPGA(localRoute,ddrParams,chipLinkParams,gpioParams)(p.alterPartial {
+      case PLLKey => pll
+    })).module)
+    val inst = Module(pll.module)
 
     //---------------------------------------------------------------------
     // DDR
@@ -209,7 +219,7 @@ class IOFPGAChip(implicit override val p: Parameters) extends VC707Shell
     chiplink.c2b.clk := clk100_180
 
     vc707_sys_clock_mmcm3.io.reset   := reset
-    vc707_sys_clock_mmcm3.io.clk_in1 := chiplink.b2c.clk.asUInt.toBool
+    vc707_sys_clock_mmcm3.io.clk_in1 := chiplink.b2c.clk
     iofpga.io.chiplink.b2c.clk := vc707_sys_clock_mmcm3.getClocks(0)
 
 
