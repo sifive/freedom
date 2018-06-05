@@ -162,7 +162,7 @@ static int copy(void)
 	dputs("CMD18");
 	kprintf("LOADING  ");
 
-	REG32(spi, SPI_REG_SCKDIV) = (F_CLK / 20000000UL);
+	REG32(spi, SPI_REG_SCKDIV) = (F_CLK / 16666666UL);
 	if (sd_cmd(0x52, 0, 0xE1) != 0x00) {
 		sd_cmd_end();
 		return 1;
