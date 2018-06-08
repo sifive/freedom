@@ -2,9 +2,9 @@
 base_dir := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 BUILD_DIR := $(base_dir)/builds/u500vc707iofpga
 FPGA_DIR := $(base_dir)/fpga-shells/xilinx
-MODEL := IOFPGAChip
-PROJECT := sifive.freedom.unleashed.vc707.iofpga
-export CONFIG_PROJECT := sifive.freedom.unleashed.vc707.iofpga
+PROJECT := sifive.fpgashells.shell.xilinx
+MODEL := VC707Shell
+export CONFIG_PROJECT := sifive.freedom.unleashed
 export CONFIG := IOFPGAConfig
 export BOARD := vc707
 
