@@ -12,8 +12,8 @@ export BOOTROM_DIR := $(base_dir)/bootrom/sdboot
 rocketchip_dir := $(base_dir)/rocket-chip
 sifiveblocks_dir := $(base_dir)/sifive-blocks
 VSRCS := \
-	$(rocketchip_dir)/vsrc/AsyncResetReg.v \
-	$(rocketchip_dir)/vsrc/plusarg_reader.v \
+	$(rocketchip_dir)/src/main/resources/vsrc/AsyncResetReg.v \
+	$(rocketchip_dir)/src/main/resources/vsrc/plusarg_reader.v \
 	$(sifiveblocks_dir)/vsrc/SRLatch.v \
 	$(FPGA_DIR)/common/vsrc/PowerOnResetFPGAOnly.v \
 	$(FPGA_DIR)/$(BOARD)/vsrc/sdio.v \

@@ -46,7 +46,7 @@ class U500VeraConfig extends Config(
     case MemoryMicrosemiDDR3Key => PolarFireEvalKitDDR3Params(address = Seq(AddressSet(0x80000000L,0x40000000L-1))) //1GB
 //    case MemoryMicrosemiDDR4Key => PolarFireEvalKitDDR4Params(address = Seq(AddressSet(0x80000000L,0x40000000L-1))) //1GB
     case DTSTimebase => BigInt(1000000)
-    case ExtMem => up(ExtMem).copy(size = 0x40000000L)
+    case ExtMem => up(ExtMem).map(_.copy(size = 0x40000000L))
     case JtagDTMKey => new JtagDTMConfig (
       idcodeVersion = 2,      // 1 was legacy (FE310-G000, Acai).
       idcodePartNum = 0x000,  // Decided to simplify.

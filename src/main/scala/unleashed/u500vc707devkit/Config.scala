@@ -44,7 +44,7 @@ class U500VC707DevKitConfig extends Config(
     case PeripheryBusKey => up(PeripheryBusKey, site).copy(frequency = 50000000) // 50 MHz hperiphery
     case MemoryXilinxDDRKey => XilinxVC707MIGParams(address = Seq(AddressSet(0x80000000L,0x40000000L-1))) //1GB
     case DTSTimebase => BigInt(1000000)
-    case ExtMem => up(ExtMem).copy(size = 0x40000000L)
+    case ExtMem => up(ExtMem).map(_.copy(size = 0x40000000L))
     case JtagDTMKey => new JtagDTMConfig (
       idcodeVersion = 2,      // 1 was legacy (FE310-G000, Acai).
       idcodePartNum = 0x000,  // Decided to simplify.
