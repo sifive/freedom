@@ -100,10 +100,24 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule
   mbar.node := msimaster.masterNode
   pcie.foreach { mbar.node := TLFIFOFixer() := _ }
 
+  // Tap traffic for progress LEDs
+  val iTap = TLIdentityNode()
+  val oTap = TLIdentityNode()
+
   // split local master traffic either to local routing or off-chip
-  link := TLBuffer() := mbar.node
   xbar.node := TLFilter(filter) := TLBuffer() := mbar.node
-  xbar.node := TLBuffer() := link
+
+  (link
+    := TLBuffer(BufferParams.none, BufferParams.default)
+    := oTap
+    := TLBuffer(BufferParams.default, BufferParams.none)
+    := mbar.node)
+
+  (xbar.node
+    := TLBuffer(BufferParams.none, BufferParams.default)
+    := iTap
+    := TLBuffer(BufferParams.default, BufferParams.none)
+    := link)
 
   // receive traffic either from local routing or from off-chip
   sbar.node := TLBuffer() := TLAtomicAutomata() := TLFIFOFixer() := TLHintHandler() := TLBuffer() := TLWidthWidget(4) := xbar.node
@@ -128,19 +142,45 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule
     childClock := core.clock
     childReset := core.reset
 
+    // Count all messages
+    val xferWidth = 24 // 16MT
+    def count(edge: TLEdge, x: DecoupledIO[TLChannel]): UInt = {
+      val reg = RegInit(UInt(0, width=xferWidth))
+      when (x.fire() && edge.first(x)) { reg := reg + UInt(1) }
+      reg
+    }
+    def count(edge: TLEdge, x: TLBundle): UInt = {
+      count(edge, x.a) +
+      count(edge, x.b) +
+      count(edge, x.c) +
+      count(edge, x.d) +
+      count(edge, x.e)
+    }
+    def count(x: (TLBundle, TLEdge)): UInt = count(x._2, x._1)
+
+    val traffic = withClockAndReset(core.clock, core.reset) {
+      RegNext(count(iTap.out(0)) + count(oTap.out(0)))
+    }
+
     val (sys, sysEdge) = sysTap.out(0)
-    withClockAndReset(sys.clock, sys.reset) {
+    val toggle = withClockAndReset(sys.clock, sys.reset) {
       // Blink LEDs to indicate clock good
       val hz = UInt((sysEdge.clock.freqMHz * 1000000.0).toLong)
       val divider = RegInit(hz)
       val oneSecond = divider === UInt(0)
       divider := Mux(oneSecond, hz, divider - UInt(1))
-
       val toggle = RegInit(UInt(2))
       when (oneSecond) { toggle := ~toggle }
+      toggle
+    }
 
-      // Connect status indications
-      leds.foreach { _ := Cat(wrangler.module.status, childReset, toggle) }
+    // Connect status indication
+    leds.foreach { leds =>
+      val width = leds.getWidth
+      val stride = xferWidth / width
+      val trafficLED = Cat(Seq.tabulate(width) { i => traffic(i*stride) }.reverse)
+      val resetLED = Cat(wrangler.module.status, toggle)
+      leds := Mux(core.reset, resetLED, trafficLED)
     }
   }
 }
