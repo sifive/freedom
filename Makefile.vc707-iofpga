@@ -1,11 +1,11 @@
 # See LICENSE for license details.
 base_dir := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
-BUILD_DIR := $(base_dir)/builds/u500vc707iofpga
+BUILD_DIR := $(base_dir)/builds/vc707-iofpga
 FPGA_DIR := $(base_dir)/fpga-shells/xilinx
-MODEL := IOFPGAChip
-PROJECT := sifive.freedom.unleashed.vc707.iofpga
-export CONFIG_PROJECT := sifive.freedom.unleashed.vc707.iofpga
-export CONFIG := IOFPGAConfig
+PROJECT := sifive.fpgashells.shell.xilinx
+MODEL := VC707Shell
+export CONFIG_PROJECT := sifive.freedom.unleashed
+export CONFIG := IOFPGAConfig_With200MHz
 export BOARD := vc707
 
 rocketchip_dir := $(base_dir)/rocket-chip
@@ -13,10 +13,8 @@ sifiveblocks_dir := $(base_dir)/sifive-blocks
 VSRCS := \
 	$(rocketchip_dir)/src/main/resources/vsrc/AsyncResetReg.v \
 	$(rocketchip_dir)/src/main/resources/vsrc/plusarg_reader.v \
-	$(sifiveblocks_dir)/vsrc/SRLatch.v \
 	$(FPGA_DIR)/common/vsrc/PowerOnResetFPGAOnly.v \
-	$(FPGA_DIR)/$(BOARD)/vsrc/sdio.v \
-	$(FPGA_DIR)/$(BOARD)/vsrc/vc707reset.v \
+	$(sifiveblocks_dir)/vsrc/SRLatch.v \
 	$(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).v
 
 include common.mk

@@ -138,9 +138,9 @@ class IOFPGA(
     // Skew the RX clock to sample in the data eye
     val chiplink_rx_pll = Module(new PolarFireCCC(PLLParameters(
         name = "chiplink_rx_pll",
-        InClockParameters(125), 
-        Seq(OutClockParameters(freqMHz=125),
-        OutClockParameters(freqMHz=125, phaseDeg = 240)))))
+        PLLInClockParameters(125), 
+        Seq(PLLOutClockParameters(freqMHz=125),
+        PLLOutClockParameters(freqMHz=125, phaseDeg = 240)))))
 
     val lock = chiplink_rx_pll.io.PLL_LOCK_0
     chiplink_rx_pll.io.REF_CLK_0 := chiplink_rx_clkint.io.Y
