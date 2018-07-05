@@ -4,12 +4,13 @@ name := "freedom"
 version := "0.1.0"
 
 lazy val commonSettings = Seq(
-  scalaVersion := "2.11.12",  // This needs to match rocket-chip's scalaVersion
+  scalaVersion := "2.12.4",  // This needs to match rocket-chip's scalaVersion
   scalacOptions ++= Seq(
     "-deprecation",
     "-feature",
     "-unchecked",
     "-Xfatal-warnings",
+    "-Xsource:2.11",
     "-language:reflectiveCalls"
   )
 )
