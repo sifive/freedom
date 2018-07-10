@@ -35,6 +35,17 @@ class U500VC707DevKitSystem(implicit p: Parameters) extends RocketSubsystem
   uarts.foreach { x => clock.bind(x.device) }
   spis.foreach  { x => clock.bind(x.device) }
 
+  // Work-around for a kernel bug (command-line ignored if /chosen missing)
+  val chosen = new DeviceSnippet {
+    def describe() = Description("chosen", Map())
+  }
+
+  // There is an MMC slot attached to SPI0 on this board
+  val mmc = new MMCDevice(spis.head.device)
+  ResourceBinding {
+    Resource(mmc, "reg").bind(ResourceAddress(0))
+  }
+
   override lazy val module = new U500VC707DevKitSystemModule(this)
 }
 
