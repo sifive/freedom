@@ -21,7 +21,7 @@ import sifive.fpgashells.devices.xilinx.xilinxvc707pciex1._
 // U500VC707DevKitSystem
 //-------------------------------------------------------------------------
 
-class U500VC707DevKitSystem(implicit p: Parameters) extends RocketSubsystem
+class OLDU500VC707DevKitSystem(implicit p: Parameters) extends RocketSubsystem
     with HasPeripheryMaskROMSlave
     with HasPeripheryDebug
     with HasSystemErrorSlave
@@ -46,10 +46,10 @@ class U500VC707DevKitSystem(implicit p: Parameters) extends RocketSubsystem
     Resource(mmc, "reg").bind(ResourceAddress(0))
   }
 
-  override lazy val module = new U500VC707DevKitSystemModule(this)
+  override lazy val module = new OLDU500VC707DevKitSystemModule(this)
 }
 
-class U500VC707DevKitSystemModule[+L <: U500VC707DevKitSystem](_outer: L)
+class OLDU500VC707DevKitSystemModule[+L <: OLDU500VC707DevKitSystem](_outer: L)
   extends RocketSubsystemModuleImp(_outer)
     with HasRTCModuleImp
     with HasPeripheryDebugModuleImp

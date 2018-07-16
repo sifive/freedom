@@ -1,0 +1,24 @@
+# See LICENSE for license details.
+base_dir := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
+BUILD_DIR := $(base_dir)/builds/u500vc707devkitNEW
+FPGA_DIR := $(base_dir)/fpga-shells/xilinx
+PROJECT := sifive.fpgashells.shell.xilinx
+MODEL := VC707Shell
+export CONFIG_PROJECT := sifive.freedom.unleashed
+export CONFIG := DevKitFPGAConfig_WithDevKit50MHz
+export BOARD := vc707
+export BOOTROM_DIR := $(base_dir)/bootrom/sdboot
+
+rocketchip_dir := $(base_dir)/rocket-chip
+sifiveblocks_dir := $(base_dir)/sifive-blocks
+VSRCS := \
+	$(rocketchip_dir)/src/main/resources/vsrc/AsyncResetReg.v \
+	$(rocketchip_dir)/src/main/resources/vsrc/plusarg_reader.v \
+	$(sifiveblocks_dir)/vsrc/SRLatch.v \
+	$(FPGA_DIR)/common/vsrc/PowerOnResetFPGAOnly.v \
+	$(FPGA_DIR)/$(BOARD)/vsrc/sdio.v \
+	$(FPGA_DIR)/$(BOARD)/vsrc/vc707reset.v \
+	$(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).rom.v \
+	$(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).v
+
+include common.mk

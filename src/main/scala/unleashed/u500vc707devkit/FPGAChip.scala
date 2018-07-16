@@ -40,7 +40,7 @@ class U500VC707DevKitFPGAChip(implicit override val p: Parameters)
   // Connect the clock to the 50 Mhz output from the PLL
   dut_clock := clk50
   withClockAndReset(dut_clock, dut_reset) {
-    val dut = Module(LazyModule(new U500VC707DevKitSystem).module)
+    val dut = Module(LazyModule(new OLDU500VC707DevKitSystem).module)
 
     //---------------------------------------------------------------------
     // Connect peripherals

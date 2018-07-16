@@ -10,7 +10,7 @@
 
 #define MAX_CORES 8
 
-#define PAYLOAD_SIZE	(20 << 11)
+#define PAYLOAD_SIZE	(26 << 11)
 
 #define F_CLK 50000000UL
 

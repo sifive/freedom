@@ -120,7 +120,7 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule
     := link)
 
   // receive traffic either from local routing or from off-chip
-  sbar.node := TLBuffer() := TLAtomicAutomata() := TLFIFOFixer() := TLHintHandler() := TLBuffer() := TLWidthWidget(4) := xbar.node
+  sbar.node := TLBuffer() := TLAtomicAutomata() := TLBuffer() := TLFIFOFixer() := TLHintHandler() := TLBuffer() := TLWidthWidget(4) := xbar.node
 
   // local slave Xbar
   sram.node := TLFragmenter(8, 64) := sbar.node
