@@ -84,9 +84,8 @@ $(bit): $(romgen) $(f)
 		-tclargs \
 		-top-module "$(MODEL)" \
 		-F "$(f)" \
-		-ip-vivado-tcls "$(shell find '$(BUILD_DIR)' -name '*.vivado.tcl')" \
+		-ip-vivado-tcls "$(shell find '$(BUILD_DIR)' -name '$(CONFIG_PROJECT).$(CONFIG).*.vivado.tcl')" \
 		-board "$(BOARD)"
-
 
 # Build .mcs
 mcs := $(BUILD_DIR)/obj/$(MODEL).mcs
@@ -99,7 +98,7 @@ mcs: $(mcs)
 # Build Libero project
 prjx := $(BUILD_DIR)/libero/$(MODEL).prjx
 $(prjx): $(verilog)
-	cd $(BUILD_DIR); libero SCRIPT:$(fpga_common_script_dir)/libero.tcl SCRIPT_ARGS:"$(BUILD_DIR) $(MODEL) $(PROJECT) $(CONFIG) $(BOARD)"
+	cd $(BUILD_DIR); libero SCRIPT:$(fpga_common_script_dir)/libero.tcl SCRIPT_ARGS:"$(BUILD_DIR) $(MODEL) $(CONFIG_PROJECT) $(CONFIG) $(BOARD)"
 
 .PHONY: prjx
 prjx: $(prjx)

@@ -2,10 +2,10 @@
 base_dir := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 BUILD_DIR := $(base_dir)/builds/vera-iofpga
 FPGA_DIR := $(base_dir)/fpga-shells/microsemi
-MODEL := IOFPGAChip
-PROJECT := sifive.freedom.unleashed.vera.iofpga
-export CONFIG_PROJECT := sifive.freedom.unleashed.vera.iofpga
-export CONFIG := IOFPGAConfig
+PROJECT := sifive.fpgashells.shell.microsemi
+MODEL := VeraShell
+export CONFIG_PROJECT := sifive.freedom.unleashed
+export CONFIG := IOFPGAConfig_With125MHz
 export BOARD := vera
 
 rocketchip_dir := $(base_dir)/rocket-chip
@@ -14,9 +14,6 @@ VSRCS := \
 	$(rocketchip_dir)/src/main/resources/vsrc/AsyncResetReg.v \
 	$(rocketchip_dir)/src/main/resources/vsrc/plusarg_reader.v \
 	$(sifiveblocks_dir)/vsrc/SRLatch.v \
-	$(FPGA_DIR)/common/vsrc/PowerOnResetFPGAOnly.v \
-	$(FPGA_DIR)/$(BOARD)/vsrc/sdio.v \
-	$(FPGA_DIR)/$(BOARD)/vsrc/vc707reset.v \
 	$(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).v
 
 include common.mk
