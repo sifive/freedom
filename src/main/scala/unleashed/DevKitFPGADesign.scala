@@ -80,23 +80,16 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
 
   // hook up UARTs, based on configuration and available overlays
   val divinit = (p(PeripheryBusKey).frequency / 115200).toInt
-  val uartParams = p(PeripheryUARTKey).map(_.copy(divisorInit = divinit))
+  val uartParams = p(PeripheryUARTKey)
   val uartOverlays = p(UARTOverlayKey)
   val uartParamsWithOverlays = uartParams zip uartOverlays
-  uartParamsWithOverlays.zipWithIndex.foreach { case ((uparam, uoverlay), i) => {
-    val uname = Some(s"uart_$i")
-    val u = uoverlay(UARTOverlayParams(pbus.beatBytes, uparam, uname))
-    pbus.toVariableWidthSlave(uname) { u.node }
-    ibus.fromAsync := u.intnode
+  uartParamsWithOverlays.foreach { case (uparam, uoverlay) => {
+    val u = uoverlay(UARTOverlayParams(pbus.beatBytes, uparam, divinit, pbus, ibus.fromAsync, None))
     tlclock.bind(u.device)
   } }
 
-  // hook up SDIO, based on configuration and available overlays
-  (p(PeripherySPIKey) zip p(SDIOOverlayKey)).zipWithIndex.foreach { case ((sparam, soverlay), i) => {
-    val sname = Some(s"spi_$i")
-    val s = soverlay(SDIOOverlayParams(pbus.beatBytes, sparam, sname))
-    pbus.toVariableWidthSlave(sname) { s.rnode }
-    ibus.fromAsync := s.intnode
+  (p(PeripherySPIKey) zip p(SDIOOverlayKey)).foreach { case (sparam, soverlay) => {
+    val s = soverlay(SDIOOverlayParams(sparam, pbus, ibus.fromAsync, None))
     tlclock.bind(s.device)
 
     // Assuming MMC slot attached to SPIs. See TODO above.
@@ -105,6 +98,7 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
       Resource(mmc, "reg").bind(ResourceAddress(0))
     }
   } }
+
 
   // TODO: currently, only hook up one memory channel
   require(nMemoryChannels == 1, "Core complex must have 1 master memory port")
@@ -127,12 +121,9 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
 
   // LEDs / GPIOs
   val gpioParams = p(PeripheryGPIOKey)
-  val gpios = gpioParams.zipWithIndex.map { case(params, i) =>
-    val name = Some(s"gpio_$i")
-    val gpio = LazyModule(new TLGPIO(pbus.beatBytes, params)).suggestName(name)
-    pbus.toVariableWidthSlave(name) { gpio.node }
-    ibus.fromAsync := gpio.intnode
-    gpio
+  val gpios = gpioParams.map { case(params) =>
+    val g = GPIO.attach(AttachedGPIOParams(params), pbus, ibus.fromAsync, None)
+    g.ioNode.makeSink
   }
 
   val leds = p(LEDOverlayKey).headOption.map(_(LEDOverlayParams()))
@@ -153,7 +144,7 @@ class U500VC707DevKitSystemModule[+L <: DevKitFPGADesign](_outer: L)
   val gpioParams = _outer.gpioParams
   val gpio_pins = Wire(new GPIOPins(() => PinGen(), gpioParams(0)))
 
-  GPIOPinsFromPort(gpio_pins, _outer.gpios(0).module.io.port)
+  GPIOPinsFromPort(gpio_pins, _outer.gpios(0).bundle)
 
   gpio_pins.pins.foreach { _.i.ival := Bool(false) }
   val gpio_cat = Cat(Seq.tabulate(gpio_pins.pins.length) { i => gpio_pins.pins(i).o.oval })
