@@ -1,11 +1,11 @@
 # See LICENSE for license details.
 base_dir := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
-BUILD_DIR := $(base_dir)/builds/u500vc707devkit
+BUILD_DIR := $(base_dir)/builds/u500vc707devkitNEW
 FPGA_DIR := $(base_dir)/fpga-shells/xilinx
-MODEL := U500VC707DevKitFPGAChip
-PROJECT := sifive.freedom.unleashed.u500vc707devkit
-export CONFIG_PROJECT := sifive.freedom.unleashed.u500vc707devkit
-export CONFIG := U500VC707DevKitConfig
+PROJECT := sifive.fpgashells.shell.xilinx
+MODEL := VC707Shell
+export CONFIG_PROJECT := sifive.freedom.unleashed
+export CONFIG := DevKitFPGAConfig_WithDevKit50MHz
 export BOARD := vc707
 export BOOTROM_DIR := $(base_dir)/bootrom/sdboot
 
