@@ -1,12 +1,12 @@
 # See LICENSE for license details.
 base_dir := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
-BUILD_DIR := $(base_dir)/builds/u500vcu118devkitNEW
+BUILD_DIR := $(base_dir)/builds/vc707-u500devkit
 FPGA_DIR := $(base_dir)/fpga-shells/xilinx
 PROJECT := sifive.fpgashells.shell.xilinx
-MODEL := VCU118Shell
+MODEL := VC707Shell
 export CONFIG_PROJECT := sifive.freedom.unleashed
 export CONFIG := DevKitFPGAConfig_WithDevKit50MHz
-export BOARD := vcu118
+export BOARD := vc707
 export BOOTROM_DIR := $(base_dir)/bootrom/sdboot
 
 rocketchip_dir := $(base_dir)/rocket-chip
@@ -17,7 +17,7 @@ VSRCS := \
 	$(sifiveblocks_dir)/vsrc/SRLatch.v \
 	$(FPGA_DIR)/common/vsrc/PowerOnResetFPGAOnly.v \
 	$(FPGA_DIR)/$(BOARD)/vsrc/sdio.v \
-	$(FPGA_DIR)/$(BOARD)/vsrc/vcu118reset.v \
+	$(FPGA_DIR)/$(BOARD)/vsrc/vc707reset.v \
 	$(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).rom.v \
 	$(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).v
 
