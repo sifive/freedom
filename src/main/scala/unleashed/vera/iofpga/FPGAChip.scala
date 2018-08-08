@@ -78,11 +78,13 @@ class IOFPGA(
   gpioparams:     GPIOParams)(implicit p: Parameters) extends LazyModule
 {
   val link = LazyModule(new ChipLink(chiplinkparams))
+  val linksink = link.ioNode.makeSink
   val sbar = LazyModule(new TLXbar)
   val xbar = LazyModule(new TLXbar)
   val mbar = LazyModule(new TLXbar)
   val serr = LazyModule(new TLError(ErrorParams(Seq(AddressSet(0x2800000000L, 0xffffffffL)), 8, 128, true), beatBytes = 8))
-  val gpio = LazyModule(new TLGPIO(w = 8, c = gpioparams))
+  val gpio = LazyModule(new TLGPIO(busWidthBytes = 8, params = gpioparams))
+  val gpiosink = gpio.ioNode.makeSink
   val polarfirepcie = LazyModule(new PolarFireEvalKitPCIeX4)
   val msimaster = LazyModule(new MSIMaster(Seq(MSITarget(address=0x2020000, spacing=4, number=10))))
   val test_ram  = LazyModule(new TLRAM(AddressSet(0x2500000000L, 0x3fff), beatBytes = 8))
@@ -93,7 +95,7 @@ class IOFPGA(
 
   // local master Xbar
   mbar.node := msimaster.masterNode
-  mbar.node := TLFIFOFixer() := polarfirepcie.crossTLOut := polarfirepcie.master
+  mbar.node := TLFIFOFixer() := polarfirepcie.crossTLOut(polarfirepcie.master)
 
   // split local master traffic either to local routing or off-chip
   link.node := TLBuffer() := mbar.node
@@ -105,15 +107,17 @@ class IOFPGA(
 
   // local slave Xbar
   serr.node := sbar.node
-  gpio.node := TLFragmenter(8,64,true) := sbar.node
-  polarfirepcie.slave := polarfirepcie.crossTLIn := TLWidthWidget(8) := sbar.node
-  polarfirepcie.control := polarfirepcie.crossTLIn := TLWidthWidget(8) := sbar.node
+
+
+  gpio.controlXing(NoCrossing) := TLFragmenter(8,64,true) := sbar.node
+  polarfirepcie.crossTLIn(polarfirepcie.slave) := TLWidthWidget(8) := sbar.node
+  polarfirepcie.crossTLIn(polarfirepcie.control) := TLWidthWidget(8) := sbar.node
   test_ram.node := TLFragmenter(8, 64) := sbar.node
   pf_ddr4.node := sbar.node
 
   // interrupts are fed into chiplink via MSI
-  msimaster.intNode := polarfirepcie.crossIntOut := polarfirepcie.intnode
-  msimaster.intNode := gpio.intnode
+  msimaster.intNode := polarfirepcie.crossIntOut(polarfirepcie.intnode)
+  msimaster.intNode := gpio.intXing(NoCrossing)
 
   lazy val module = new LazyModuleImp(this) {
     val io = IO (new Bundle {
@@ -129,7 +133,7 @@ class IOFPGA(
     io.polarfirepcie <> polarfirepcie.module.io.port
     io.pf_ddr4 <> pf_ddr4.module.io.port
 
-    io.chiplink <> link.module.io.port
+    io.chiplink <> linksink.bundle
 
     // Take the b2c clock from an input pin
     val chiplink_rx_clkint = Module(new CLKINT)
@@ -144,7 +148,7 @@ class IOFPGA(
 
     val lock = chiplink_rx_pll.io.PLL_LOCK_0
     chiplink_rx_pll.io.REF_CLK_0 := chiplink_rx_clkint.io.Y
-    link.module.io.port.b2c.clk := chiplink_rx_pll.io.OUT1_FABCLK_0.get
+    linksink.bundle.b2c.clk := chiplink_rx_pll.io.OUT1_FABCLK_0.get
 
     // Use a phase-adjusted c2b_clk to meet timing constraints
     io.chiplink.c2b.clk := io.tx_clock
@@ -156,7 +160,7 @@ class IOFPGA(
     link.module.io.c2b_clk := clock
     link.module.io.c2b_rst := ResetCatchAndSync(clock, reset || timer.orR)
 
-    io.gpio <> gpio.module.io.port
+    io.gpio <> gpiosink.bundle
 
     // Report link-up once RX is out of reset
     io.link_up := !io.chiplink.b2c.rst
