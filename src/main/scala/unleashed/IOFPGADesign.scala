@@ -53,12 +53,19 @@ class ShadowRAMHack(implicit p: Parameters) extends LazyModule
 //-------------------------------------------------------------------------
 
 case object IOFPGAFrequencyKey extends Field[Double](100.0)
-class IOFPGADesign()(implicit p: Parameters) extends LazyModule
+class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScope
 {
+  // Merge the expansion board's DTS with the Aloe DTS
+  Device.skipIndexes(10000)
+  lazy val dts = DTS(bindingTree)
+  lazy val prelude = io.Source.fromFile("bootrom/U540Config.dts").mkString
+  lazy val dtb = DTB(prelude + dts.substring(10))
+  ElaborationArtefacts.add("dts", dts)
+
   val chiplinkparams = ChipLinkParams(
-        TLUH = AddressSet.misaligned(0,             0x40000000L),                   // Aloe MMIO              [  0GB, 1GB)
+        TLUH = AddressSet.misaligned(0,             0x40000000L),                   // U540 MMIO              [  0GB, 1GB)
         TLC =  AddressSet.misaligned(0x60000000L,   0x20000000L) ++                 // local memory behind L2 [1.5GB, 2GB)
-               AddressSet.misaligned(0x80000000L,   0x2000000000L - 0x80000000L) ++ // Aloe DDR               [  2GB, 128GB)
+               AddressSet.misaligned(0x80000000L,   0x2000000000L - 0x80000000L) ++ // U540 DDR               [  2GB, 128GB)
                AddressSet.misaligned(0x3000000000L, 0x1000000000L),                 // local memory behind L2 [192GB, 256GB)
         syncTX = true
   )
@@ -135,7 +142,32 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule
   // grab LEDs if any
   val leds = p(LEDOverlayKey).headOption.map(_(LEDOverlayParams()))
 
+  // Bind IOFPGA interrupts to PLIC on the HiFive unleashed
+  val plicDevice = new Device {
+    def describe(resources: ResourceBindings) = Description("plic", Map())
+    override val label = "{/soc/interrupt-controller@c000000}"
+  }
+  ResourceBinding {
+    val sources = msimaster.intNode.edges.in.map(_.source)
+    val flatSources = (sources zip sources.map(_.num).scanLeft(0)(_+_).init).flatMap {
+      case (s, o) => s.sources.map(z => z.copy(range = z.range.offset(o)))}
+    flatSources.foreach { s => s.resources.foreach { r =>
+      (s.range.start until s.range.end).foreach { i => r.bind(plicDevice, ResourceInt(i+32)) }}}
+  }
+
+  // Bind IOFPGA soc nodes to HiFive unleashed
+  ResourceBinding {
+    Resource(ResourceAnchors.root, "compat").bind(ResourceString("iofpga"))
+    Resource(ResourceAnchors.root, "model").bind(ResourceString("iofpga-dev"))
+    Resource(ResourceAnchors.root, "width").bind(ResourceInt(2))
+    Resource(ResourceAnchors.soc,  "width").bind(ResourceInt(2))
+    val managers = ManagerUnification(sbar.node.edges.in.head.manager.managers)
+    managers.foreach { manager => manager.resources.foreach { _.bind(manager.toResource) }}
+  }
+
   lazy val module = new LazyRawModuleImp(this) {
+    println(dts)
+
     val (core, _) = coreClock.in(0)
     childClock := core.clock
     childReset := core.reset
