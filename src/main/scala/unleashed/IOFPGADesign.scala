@@ -18,8 +18,6 @@ import sifive.blocks.devices.chiplink._
 import sifive.fpgashells.shell._
 import sifive.fpgashells.clocks._
 
-import sifive.freedom.unleashed.u500vc707devkit.FreedomUVC707Config
-
 //-------------------------------------------------------------------------
 // ShadowRAMHack -- shadow 512MiB of DDR at 0x6000_0000 from 0x30_0000_000
 //                  this makes it possible to boot linux using FPGA DDR

@@ -22,14 +22,9 @@ import sifive.blocks.devices.uart._
 import sifive.blocks.devices.gpio._
 import sifive.blocks.devices.pinctrl.{BasePin}
 
-import sifive.fpgashells.devices.xilinx.xilinxvc707mig._
-import sifive.fpgashells.devices.xilinx.xilinxvc707pciex1._
-
 import sifive.fpgashells.shell._
 import sifive.fpgashells.clocks._
 import sifive.fpgashells.ip.xilinx.PowerOnResetFPGAOnly
-
-import sifive.freedom.unleashed.u500vc707devkit.U500VC707DevKitConfig
 
 object PinGen {
   def apply(): BasePin = {
@@ -163,7 +158,12 @@ class WithDevKit125MHz extends WithDevKitFrequency(125)
 class WithDevKit150MHz extends WithDevKitFrequency(150)
 class WithDevKit200MHz extends WithDevKitFrequency(200)
 
-class DevKitFPGAConfig extends Config(
+class DevKitU500VC707FPGAConfig extends Config(
   new U500VC707DevKitConfig().alter((site, here, up) => {
+    case DesignKey => { (p:Parameters) => new DevKitWrapper()(p) }
+  }))
+
+class DevKitU500VCU118FPGAConfig extends Config(
+  new U500VCU118DevKitConfig().alter((site, here, up) => {
     case DesignKey => { (p:Parameters) => new DevKitWrapper()(p) }
   }))
