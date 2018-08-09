@@ -15,6 +15,8 @@ import freechips.rocketchip.util.{ElaborationArtefacts,ResetCatchAndSync}
 import sifive.blocks.devices.msi._
 import sifive.blocks.devices.chiplink._
 
+import nvidia.blocks.dla._
+
 import sifive.fpgashells.shell._
 import sifive.fpgashells.clocks._
 
@@ -139,6 +141,25 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
   // interrupts are fed into chiplink via MSI
   pcieInt.foreach { msimaster.intNode := _ }
 
+  // Include optional NVDLA config
+  val nvdla = p(NVDLAKey).map { config =>
+    val nvdla = LazyModule(new NVDLA(config))
+    val dlaGroup = ClockGroup()
+    val dlaClock = ClockSinkNode(freqMHz = 400.0/3)
+    dlaClock := wrangler.node := dlaGroup := corePLL
+
+    mbar.node := TLFIFOFixer() := TLWidthWidget(8) := nvdla.crossTLOut(nvdla.dbb_tl_node)
+    nvdla.crossTLIn(nvdla.cfg_tl_node := nvdla { TLFragmenter(4, 64) := TLWidthWidget(8) }) := sbar.node
+    msimaster.intNode := nvdla.crossIntOut(nvdla.int_node)
+
+    InModuleBody {
+      val (domain, _) = dlaClock.in(0)
+      nvdla.module.clock := domain.clock
+      nvdla.module.reset := domain.reset
+    }
+    nvdla
+  }
+
   // grab LEDs if any
   val leds = p(LEDOverlayKey).headOption.map(_(LEDOverlayParams()))
 
@@ -224,6 +245,13 @@ class With100MHz extends WithFrequency(100)
 class With125MHz extends WithFrequency(125)
 class With150MHz extends WithFrequency(150)
 class With200MHz extends WithFrequency(200)
+
+class WithNVDLA(config: String) extends Config((site, here, up) => {
+  case NVDLAKey => Some(NVDLAParams(config = config, raddress = 0x10140000 + 0x2000000000L))
+})
+
+class WithNVDLALarge extends WithNVDLA("large")
+class WithNVDLASmall extends WithNVDLA("small")
 
 class IOFPGAConfig extends Config(
   new FreedomUVC707Config().alter((site, here, up) => {
