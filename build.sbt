@@ -9,7 +9,6 @@ lazy val commonSettings = Seq(
     "-deprecation",
     "-feature",
     "-unchecked",
-    "-Xfatal-warnings",
     "-Xsource:2.11",
     "-language:reflectiveCalls"
   )
