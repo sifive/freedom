@@ -87,12 +87,20 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
   val sbar = LazyModule(new TLXbar)
   val xbar = LazyModule(new TLXbar)
   val mbar = LazyModule(new TLXbar)
-  val serr = LazyModule(new TLError(ErrorParams(Seq(AddressSet(0x2800000000L, 0xffffffffL)), 8, 128, true), beatBytes = 8))
+  val serr = LazyModule(new TLError(ErrorParams(Seq(AddressSet(0x2f00000000L, 0x7fffffffL)), 8, 128, true), beatBytes = 8))
+  val dtbrom = LazyModule(new TLROM(0x2ff0000000L, 0x10000, dtb.contents, executable = false, beatBytes = 8))
   val msimaster = LazyModule(new MSIMaster(Seq(MSITarget(address=0x2020000, spacing=4, number=10))))
-  val sram = LazyModule(new TLRAM(AddressSet(0x2400000000L, 0xfff), beatBytes = 8))
   // We only support the first DDR or PCIe controller in this design
   val ddr = p(DDROverlayKey).headOption.map(_(DDROverlayParams(0x3000000000L, wrangler.node)))
-  val (pcie, pcieInt) = p(PCIeOverlayKey).headOption.map(_(PCIeOverlayParams(wrangler.node))).unzip
+  val pcieControllers = p(PCIeOverlayKey).size
+  val lowBar = 0x20000000 / (pcieControllers min 2)
+  val pcieAddrs = Seq(
+    (0x2c00000000L, Seq(AddressSet(0x2000000000L, 0x3ffffffffL), AddressSet(0x40000000, lowBar-1))),
+    (0x2d00000000L, Seq(AddressSet(0x2400000000L, 0x3ffffffffL), AddressSet(0x50000000, lowBar-1))),
+    (0x2e00000000L, Seq(AddressSet(0x2400000000L, 0x3ffffffffL))))
+  val (pcie, pcieInt) = p(PCIeOverlayKey).zipWithIndex.map { case (overlay, i) =>
+    pcieAddrs(i) match { case (ecam, bars) => overlay(PCIeOverlayParams(wrangler.node, bars, ecam)) }
+  }.unzip
   // We require ChipLink, though, obviously
   val link = p(ChipLinkOverlayKey).head(ChipLinkOverlayParams(
     params   = chiplinkparams,
@@ -130,8 +138,12 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
   sbar.node := TLBuffer() := TLAtomicAutomata() := TLBuffer() := TLFIFOFixer() := TLHintHandler() := TLBuffer() := TLWidthWidget(4) := xbar.node
 
   // local slave Xbar
-  sram.node := TLFragmenter(8, 64) := sbar.node
   serr.node := sbar.node
+  dtbrom.node := TLFragmenter(8, 64) := sbar.node
+  if (ddr.isEmpty) {
+    val sram = LazyModule(new TLRAM(AddressSet(0x2f90000000L, 0xfff), beatBytes = 8))
+    sram.node := TLFragmenter(8, 64) := sbar.node
+  }
   ddr.foreach {
     val hack = LazyModule(new ShadowRAMHack)
     _ := hack.node := sbar.node
@@ -247,7 +259,7 @@ class With150MHz extends WithFrequency(150)
 class With200MHz extends WithFrequency(200)
 
 class WithNVDLA(config: String) extends Config((site, here, up) => {
-  case NVDLAKey => Some(NVDLAParams(config = config, raddress = 0x10140000 + 0x2000000000L))
+  case NVDLAKey => Some(NVDLAParams(config = config, raddress = 0x2f80000000L))
 })
 
 class WithNVDLALarge extends WithNVDLA("large")
