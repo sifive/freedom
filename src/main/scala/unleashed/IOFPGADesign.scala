@@ -21,36 +21,6 @@ import sifive.fpgashells.shell._
 import sifive.fpgashells.clocks._
 
 //-------------------------------------------------------------------------
-// ShadowRAMHack -- shadow 512MiB of DDR at 0x6000_0000 from 0x30_0000_000
-//                  this makes it possible to boot linux using FPGA DDR
-//-------------------------------------------------------------------------
-
-class ShadowRAMHack(implicit p: Parameters) extends LazyModule
-{
-  val from = AddressSet(0x60000000L, 0x1fffffffL)
-  val to = AddressSet(0x3000000000L, 0x1fffffffL)
-
-  val node = TLAdapterNode(
-    clientFn  = {cp => cp },
-    managerFn = { mp =>
-      require (mp.managers.size == 1)
-      mp.copy(managers = mp.managers.map { m =>
-        m.copy(address = m.address ++ Seq(from))
-      })
-    })
-
-  lazy val module = new LazyModuleImp(this) {
-    (node.in zip node.out) foreach { case ((in, _), (out, _)) =>
-      out <> in
-      out.a.bits.address := Mux(
-        from.contains(in.a.bits.address),
-        in.a.bits.address + UInt(to.base - from.base),
-        in.a.bits.address)
-    }
-  }
-}
-
-//-------------------------------------------------------------------------
 // IOFPGAChip
 //-------------------------------------------------------------------------
 
@@ -144,10 +114,7 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
     val sram = LazyModule(new TLRAM(AddressSet(0x2f90000000L, 0xfff), beatBytes = 8))
     sram.node := TLFragmenter(8, 64) := sbar.node
   }
-  ddr.foreach {
-    val hack = LazyModule(new ShadowRAMHack)
-    _ := hack.node := sbar.node
-  }
+  ddr.foreach { _ := sbar.node }
   pcie.foreach { _ :*= TLWidthWidget(8) :*= sbar.node }
 
   // interrupts are fed into chiplink via MSI
