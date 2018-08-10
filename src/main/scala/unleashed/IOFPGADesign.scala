@@ -18,8 +18,6 @@ import sifive.blocks.devices.chiplink._
 import sifive.fpgashells.shell._
 import sifive.fpgashells.clocks._
 
-import sifive.freedom.unleashed.u500vc707devkit.FreedomUVC707Config
-
 //-------------------------------------------------------------------------
 // ShadowRAMHack -- shadow 512MiB of DDR at 0x6000_0000 from 0x30_0000_000
 //                  this makes it possible to boot linux using FPGA DDR
@@ -120,7 +118,7 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule
     := link)
 
   // receive traffic either from local routing or from off-chip
-  sbar.node := TLBuffer() := TLAtomicAutomata() := TLFIFOFixer() := TLHintHandler() := TLBuffer() := TLWidthWidget(4) := xbar.node
+  sbar.node := TLBuffer() := TLAtomicAutomata() := TLBuffer() := TLFIFOFixer() := TLHintHandler() := TLBuffer() := TLWidthWidget(4) := xbar.node
 
   // local slave Xbar
   sram.node := TLFragmenter(8, 64) := sbar.node

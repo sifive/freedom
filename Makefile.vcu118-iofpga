@@ -1,24 +1,20 @@
 # See LICENSE for license details.
 base_dir := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
-BUILD_DIR := $(base_dir)/builds/u500vcu118devkit
+BUILD_DIR := $(base_dir)/builds/vcu118-iofpga
 FPGA_DIR := $(base_dir)/fpga-shells/xilinx
-MODEL := U500VCU118DevKitFPGAChip
-PROJECT := sifive.freedom.unleashed.u500vcu118devkit
-export CONFIG_PROJECT := sifive.freedom.unleashed.u500vcu118devkit
-export CONFIG := U500VCU118DevKitConfig
+PROJECT := sifive.fpgashells.shell.xilinx
+MODEL := VCU118Shell
+export CONFIG_PROJECT := sifive.freedom.unleashed
+export CONFIG := IOFPGAConfig_With200MHz
 export BOARD := vcu118
-export BOOTROM_DIR := $(base_dir)/bootrom/sdboot
 
 rocketchip_dir := $(base_dir)/rocket-chip
 sifiveblocks_dir := $(base_dir)/sifive-blocks
 VSRCS := \
 	$(rocketchip_dir)/src/main/resources/vsrc/AsyncResetReg.v \
 	$(rocketchip_dir)/src/main/resources/vsrc/plusarg_reader.v \
-	$(sifiveblocks_dir)/vsrc/SRLatch.v \
 	$(FPGA_DIR)/common/vsrc/PowerOnResetFPGAOnly.v \
-	$(FPGA_DIR)/$(BOARD)/vsrc/sdio.v \
-	$(FPGA_DIR)/$(BOARD)/vsrc/vcu118reset.v \
-	$(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).rom.v \
+	$(sifiveblocks_dir)/vsrc/SRLatch.v \
 	$(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).v
 
 include common.mk

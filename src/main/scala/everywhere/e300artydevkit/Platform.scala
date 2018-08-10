@@ -77,10 +77,10 @@ class E300ArtyDevKitPlatform(implicit val p: Parameters) extends Module {
   val sys_spi  = sys.spi
   val sys_i2c  = sys.i2c
 
-  val uart_pins = sys.outer.uartParams.map { c => Wire(new UARTPins(() => PinGen()))}
-  val pwm_pins  = sys.outer.pwmParams.map  { c => Wire(new PWMPins(() => PinGen(), c))}
-  val spi_pins  = sys.outer.spiParams.map  { c => Wire(new SPIPins(() => PinGen(), c))}
-  val i2c_pins  = sys.outer.i2cParams.map  { c => Wire(new I2CPins(() => PinGen()))}
+  val uart_pins = p(PeripheryUARTKey).map { c => Wire(new UARTPins(() => PinGen()))}
+  val pwm_pins  = p(PeripheryPWMKey).map  { c => Wire(new PWMPins(() => PinGen(), c))}
+  val spi_pins  = p(PeripherySPIKey).map  { c => Wire(new SPIPins(() => PinGen(), c))}
+  val i2c_pins  = p(PeripheryI2CKey).map  { c => Wire(new I2CPins(() => PinGen()))}
 
   (uart_pins zip  sys_uart) map {case (p, r) => UARTPinsFromPort(p, r, clock = clock, reset = reset, syncStages = 0)}
   (pwm_pins  zip  sys_pwm)  map {case (p, r) => PWMPinsFromPort(p, r) }
@@ -123,7 +123,7 @@ class E300ArtyDevKitPlatform(implicit val p: Parameters) extends Module {
   BasePinToIOF(spi_pins(1).dq(3), iof_0(31))
 
   // I2C
-  if (sys.outer.i2cParams.length == 1) {
+  if (p(PeripheryI2CKey).length == 1) {
     BasePinToIOF(i2c_pins(0).sda, iof_0(12))
     BasePinToIOF(i2c_pins(0).scl, iof_0(13))
   }
