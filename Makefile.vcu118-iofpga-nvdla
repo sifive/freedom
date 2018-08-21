@@ -1,21 +1,23 @@
 # See LICENSE for license details.
 base_dir := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
-BUILD_DIR := $(base_dir)/builds/vcu118-iofpga
+BUILD_DIR := $(base_dir)/builds/vcu118-iofpga-nvdla
 FPGA_DIR := $(base_dir)/fpga-shells/xilinx
 PROJECT := sifive.fpgashells.shell.xilinx
 MODEL := VCU118Shell
 export CONFIG_PROJECT := sifive.freedom.unleashed
-export CONFIG := IOFPGAConfig_With200MHz
+export CONFIG := IOFPGAConfig_With200MHz_WithNVDLALarge
 export BOARD := vcu118
 
 rocketchip_dir := $(base_dir)/rocket-chip
 sifiveblocks_dir := $(base_dir)/sifive-blocks
+include nvidia-dla-blocks/vsrc.mk
 
 VSRCS := \
 	$(rocketchip_dir)/src/main/resources/vsrc/AsyncResetReg.v \
 	$(rocketchip_dir)/src/main/resources/vsrc/plusarg_reader.v \
 	$(FPGA_DIR)/common/vsrc/PowerOnResetFPGAOnly.v \
 	$(sifiveblocks_dir)/vsrc/SRLatch.v \
-	$(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).v
+	$(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).v \
+	$(NVDLA_LARGE_VSRCS)
 
 include common.mk
