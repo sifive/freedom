@@ -33,6 +33,7 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
   lazy val prelude = io.Source.fromFile("bootrom/U540Config.dts").mkString
   lazy val dtb = DTB(prelude + dts.substring(10))
   ElaborationArtefacts.add("dts", dts)
+  ElaborationArtefacts.add("graphml", graphML)
 
   val chiplinkparams = ChipLinkParams(
         TLUH = AddressSet.misaligned(0,             0x40000000L),                   // U540 MMIO              [  0GB, 1GB)
@@ -83,7 +84,7 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
 
   // local master Xbar
   mbar.node := msimaster.masterNode
-  pcie.foreach { mbar.node := TLFIFOFixer() := _ }
+  pcie.foreach { n => mbar.node := FlipRendering { implicit p => TLFIFOFixer() := n } }
 
   // Tap traffic for progress LEDs
   val iTap = TLIdentityNode()
@@ -127,7 +128,7 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
     val dlaClock = ClockSinkNode(freqMHz = 400.0/3)
     dlaClock := wrangler.node := dlaGroup := corePLL
 
-    mbar.node := TLFIFOFixer() := TLWidthWidget(8) := nvdla.crossTLOut(nvdla.dbb_tl_node)
+    FlipRendering { implicit p => mbar.node := TLFIFOFixer() } := TLWidthWidget(8) := nvdla.crossTLOut(nvdla.dbb_tl_node)
     nvdla.crossTLIn(nvdla.cfg_tl_node := nvdla { TLFragmenter(4, 64) := TLWidthWidget(8) }) := sbar.node
     msimaster.intNode := nvdla.crossIntOut(nvdla.int_node)
 
