@@ -67,7 +67,7 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
   val lowBar = 0x20000000 / (pcieControllers min 2)
   val pcieAddrs = Seq(
     (0x2c00000000L, Seq(AddressSet(0x2000000000L, 0x3ffffffffL), AddressSet(0x40000000, lowBar-1))),
-    (0x2d00000000L, Seq(AddressSet(0x2400000000L, 0x3ffffffffL), AddressSet(0x50000000, lowBar-1))),
+    (0x2d00000000L, Seq(AddressSet(0x2400000000L, 0x3ffffffffL), AddressSet(0x40000000+lowBar, lowBar-1))),
     (0x2e00000000L, Seq(AddressSet(0x2400000000L, 0x3ffffffffL))))
   val (pcie, pcieInt) = p(PCIeOverlayKey).zipWithIndex.map { case (overlay, i) =>
     pcieAddrs(i) match { case (ecam, bars) => overlay(PCIeOverlayParams(wrangler.node, bars, ecam)) }
