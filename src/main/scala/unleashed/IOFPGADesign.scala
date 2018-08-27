@@ -64,10 +64,10 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
   // We only support the first DDR or PCIe controller in this design
   val ddr = p(DDROverlayKey).headOption.map(_(DDROverlayParams(0x3000000000L, wrangler.node)))
   val pcieControllers = p(PCIeOverlayKey).size
-  val lowBar = 0x20000000 / (pcieControllers min 2)
+  val lowBarSize = if (pcieControllers == 1) 0x20000000 else 0x10000000
   val pcieAddrs = Seq(
-    (0x2c00000000L, Seq(AddressSet(0x2000000000L, 0x3ffffffffL), AddressSet(0x40000000, lowBar-1))),
-    (0x2d00000000L, Seq(AddressSet(0x2400000000L, 0x3ffffffffL), AddressSet(0x40000000+lowBar, lowBar-1))),
+    (0x2c00000000L, Seq(AddressSet(0x2000000000L, 0x3ffffffffL), AddressSet(0x40000000, lowBarSize-1))),
+    (0x2d00000000L, Seq(AddressSet(0x2400000000L, 0x3ffffffffL), AddressSet(0x40000000+lowBarSize, lowBarSize-1))),
     (0x2e00000000L, Seq(AddressSet(0x2400000000L, 0x3ffffffffL))))
   val (pcie, pcieInt) = p(PCIeOverlayKey).zipWithIndex.map { case (overlay, i) =>
     pcieAddrs(i) match { case (ecam, bars) => overlay(PCIeOverlayParams(wrangler.node, bars, ecam)) }
