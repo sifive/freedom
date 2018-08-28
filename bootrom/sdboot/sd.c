@@ -12,7 +12,11 @@
 
 #define PAYLOAD_SIZE	(26 << 11)
 
-#define F_CLK 50000000UL
+#ifndef TL_CLK
+#error Must define TL_CLK
+#endif
+
+#define F_CLK TL_CLK
 
 static volatile uint32_t * const spi = (void *)(SPI_CTRL_ADDR);
 
