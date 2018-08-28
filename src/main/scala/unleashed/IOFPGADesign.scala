@@ -234,6 +234,6 @@ class WithNVDLALarge extends WithNVDLA("large")
 class WithNVDLASmall extends WithNVDLA("small")
 
 class IOFPGAConfig extends Config(
-  new FreedomUVC707Config().alter((site, here, up) => {
+  new FreedomU500Config().alter((site, here, up) => {
     case DesignKey => { (p:Parameters) => new IOFPGADesign()(p) }
   }))

@@ -162,12 +162,7 @@ class WithDevKit125MHz extends WithDevKitFrequency(125)
 class WithDevKit150MHz extends WithDevKitFrequency(150)
 class WithDevKit200MHz extends WithDevKitFrequency(200)
 
-class DevKitU500VC707FPGAConfig extends Config(
-  new U500VC707DevKitConfig().alter((site, here, up) => {
-    case DesignKey => { (p:Parameters) => new DevKitWrapper()(p) }
-  }))
-
-class DevKitU500VCU118FPGAConfig extends Config(
-  new U500VCU118DevKitConfig().alter((site, here, up) => {
+class DevKitU500FPGADesign extends Config(
+  new U500DevKitConfig().alter((site, here, up) => {
     case DesignKey => { (p:Parameters) => new DevKitWrapper()(p) }
   }))
