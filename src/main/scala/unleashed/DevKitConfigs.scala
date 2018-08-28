@@ -39,7 +39,8 @@ class U500DevKitConfig extends Config(
   new U500DevKitPeripherals ++
   new FreedomU500Config().alter((site,here,up) => {
     case ErrorParams => ErrorParams(Seq(AddressSet(0x3000, 0xfff)), maxAtomic=site(XLen)/8, maxTransfer=128)
-    case PeripheryBusKey => up(PeripheryBusKey, site).copy(frequency = 50000000) // 50 MHz hperiphery
+    case PeripheryBusKey => up(PeripheryBusKey, site).copy(frequency =
+      BigDecimal(site(DevKitFPGAFrequencyKey)*1000000).setScale(0, BigDecimal.RoundingMode.HALF_UP).toBigInt)
     case DTSTimebase => BigInt(1000000)
     case JtagDTMKey => new JtagDTMConfig (
       idcodeVersion = 2,      // 1 was legacy (FE310-G000, Acai).
