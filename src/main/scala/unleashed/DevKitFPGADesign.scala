@@ -69,8 +69,12 @@ case object DevKitFPGAFrequencyKey extends Field[Double](100.0)
 class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) extends RocketSubsystem
     with HasPeripheryMaskROMSlave
     with HasPeripheryDebug
-    with HasSystemErrorSlave
 {
+  // Error device used for testing and to NACK invalid front port transactions
+  val error = LazyModule(new TLError(p(ErrorDeviceKey), sbus.beatBytes))
+  // always buffer the error device because no one cares about its latency
+  pbus.coupleTo("slave_named_error") { error.node := TLBuffer() := _ }
+
   val tlclock = new FixedClockResource("tlclk", p(DevKitFPGAFrequencyKey))
 
   // hook up UARTs, based on configuration and available overlays
@@ -79,12 +83,12 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
   val uartOverlays = p(UARTOverlayKey)
   val uartParamsWithOverlays = uartParams zip uartOverlays
   uartParamsWithOverlays.foreach { case (uparam, uoverlay) => {
-    val u = uoverlay(UARTOverlayParams(pbus.beatBytes, uparam, divinit, pbus, ibus.fromAsync, None))
+    val u = uoverlay(UARTOverlayParams(uparam, divinit, pbus, ibus.fromAsync))
     tlclock.bind(u.device)
   } }
 
   (p(PeripherySPIKey) zip p(SDIOOverlayKey)).foreach { case (sparam, soverlay) => {
-    val s = soverlay(SDIOOverlayParams(sparam, pbus, ibus.fromAsync, None))
+    val s = soverlay(SDIOOverlayParams(sparam, pbus, ibus.fromAsync))
     tlclock.bind(s.device)
 
     // Assuming MMC slot attached to SPIs. See TODO above.
@@ -117,7 +121,7 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
   // LEDs / GPIOs
   val gpioParams = p(PeripheryGPIOKey)
   val gpios = gpioParams.map { case(params) =>
-    val g = GPIO.attach(AttachedGPIOParams(params), pbus, ibus.fromAsync, None)
+    val g = GPIO.attach(GPIOAttachParams(gpio = params, pbus, ibus.fromAsync))
     g.ioNode.makeSink
   }
 
