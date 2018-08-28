@@ -19,7 +19,7 @@ import sifive.blocks.devices.chiplink._
 
 import sifive.fpgashells.shell.microsemi.verashell.{VeraShell,HasPCIe,HasDDR3,HasPFEvalKitChipLink}
 import sifive.fpgashells.devices.microsemi.polarfireevalkitpciex4._
-import sifive.freedom.unleashed.u500vera.FreedomVeraConfig
+import sifive.freedom.unleashed.FreedomU500Config
 import sifive.fpgashells.ip.microsemi.CLKINT
 import sifive.fpgashells.ip.microsemi.polarfiredll._
 import sifive.fpgashells.ip.microsemi.polarfireccc._
@@ -300,4 +300,4 @@ class IOFPGAChip(implicit override val p: Parameters) extends VeraShell
 
 }
 
-class IOFPGAConfig extends Config(new FreedomVeraConfig)
+class IOFPGAConfig extends Config(new FreedomU500Config)

@@ -24,7 +24,6 @@ import sifive.blocks.devices.pinctrl.{BasePin}
 
 import sifive.fpgashells.shell._
 import sifive.fpgashells.clocks._
-import sifive.fpgashells.ip.xilinx.PowerOnResetFPGAOnly
 
 object PinGen {
   def apply(): BasePin = {
@@ -35,12 +34,11 @@ object PinGen {
 class DevKitWrapper()(implicit p: Parameters) extends LazyModule
 {
   val sysClock  = p(ClockInputOverlayKey).head(ClockInputOverlayParams())
-  val sysTap    = ClockIdentityNode()
   val corePLL   = p(PLLFactoryKey)()
   val coreGroup = ClockGroup()
   val wrangler  = LazyModule(new ResetWrangler)
   val coreClock = ClockSinkNode(freqMHz = p(DevKitFPGAFrequencyKey))
-  coreClock := wrangler.node := coreGroup := corePLL := sysTap := sysClock
+  coreClock := wrangler.node := coreGroup := corePLL := sysClock
 
   // removing the debug trait is invasive, so we hook it up externally for now
   val jt = p(JTAGDebugOverlayKey).headOption.map(_(JTAGDebugOverlayParams())).get
@@ -51,14 +49,14 @@ class DevKitWrapper()(implicit p: Parameters) extends LazyModule
     val (core, _) = coreClock.in(0)
     childClock := core.clock
 
-    val djtag     = topMod.module.debug.systemjtag.get
+    val djtag = topMod.module.debug.systemjtag.get
     djtag.jtag.TCK := jt.jtag_TCK
     djtag.jtag.TMS := jt.jtag_TMS
     djtag.jtag.TDI := jt.jtag_TDI
-    jt.jtag_TDO       := djtag.jtag.TDO.data
+    jt.jtag_TDO    := djtag.jtag.TDO.data
 
-    djtag.mfr_id   := p(JtagDTMKey).idcodeManufId.U(11.W)
-    djtag.reset    := PowerOnResetFPGAOnly(sysTap.in(0)._1.clock)
+    djtag.mfr_id := p(JtagDTMKey).idcodeManufId.U(11.W)
+    djtag.reset  := core.reset
 
     childReset := core.reset | topMod.module.debug.ndreset
   }
@@ -69,8 +67,12 @@ case object DevKitFPGAFrequencyKey extends Field[Double](100.0)
 class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) extends RocketSubsystem
     with HasPeripheryMaskROMSlave
     with HasPeripheryDebug
-    with HasSystemErrorSlave
 {
+  // Error device used for testing and to NACK invalid front port transactions
+  val error = LazyModule(new TLError(p(ErrorDeviceKey), sbus.beatBytes))
+  // always buffer the error device because no one cares about its latency
+  pbus.coupleTo("slave_named_error") { error.node := TLBuffer() := _ }
+
   val tlclock = new FixedClockResource("tlclk", p(DevKitFPGAFrequencyKey))
 
   // hook up UARTs, based on configuration and available overlays
@@ -79,12 +81,12 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
   val uartOverlays = p(UARTOverlayKey)
   val uartParamsWithOverlays = uartParams zip uartOverlays
   uartParamsWithOverlays.foreach { case (uparam, uoverlay) => {
-    val u = uoverlay(UARTOverlayParams(pbus.beatBytes, uparam, divinit, pbus, ibus.fromAsync, None))
+    val u = uoverlay(UARTOverlayParams(uparam, divinit, pbus, ibus.fromAsync))
     tlclock.bind(u.device)
   } }
 
   (p(PeripherySPIKey) zip p(SDIOOverlayKey)).foreach { case (sparam, soverlay) => {
-    val s = soverlay(SDIOOverlayParams(sparam, pbus, ibus.fromAsync, None))
+    val s = soverlay(SDIOOverlayParams(sparam, pbus, ibus.fromAsync))
     tlclock.bind(s.device)
 
     // Assuming MMC slot attached to SPIs. See TODO above.
@@ -105,8 +107,8 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
     def describe() = Description("chosen", Map())
   }
 
-  // hook up as many PCIe as the board has
-  val pcies = p(PCIeOverlayKey).map(_(PCIeOverlayParams(wranglerNode)))
+  // hook the first PCIe the board has
+  val pcies = p(PCIeOverlayKey).headOption.map(_(PCIeOverlayParams(wranglerNode)))
   pcies.zipWithIndex.map { case((pcieNode, pcieInt), i) =>
     val pciename = Some(s"pcie_$i")
     sbus.fromMaster(pciename) { pcieNode }
@@ -117,7 +119,7 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
   // LEDs / GPIOs
   val gpioParams = p(PeripheryGPIOKey)
   val gpios = gpioParams.map { case(params) =>
-    val g = GPIO.attach(AttachedGPIOParams(params), pbus, ibus.fromAsync, None)
+    val g = GPIO.attach(GPIOAttachParams(gpio = params, pbus, ibus.fromAsync))
     g.ioNode.makeSink
   }
 
@@ -158,12 +160,7 @@ class WithDevKit125MHz extends WithDevKitFrequency(125)
 class WithDevKit150MHz extends WithDevKitFrequency(150)
 class WithDevKit200MHz extends WithDevKitFrequency(200)
 
-class DevKitU500VC707FPGAConfig extends Config(
-  new U500VC707DevKitConfig().alter((site, here, up) => {
-    case DesignKey => { (p:Parameters) => new DevKitWrapper()(p) }
-  }))
-
-class DevKitU500VCU118FPGAConfig extends Config(
-  new U500VCU118DevKitConfig().alter((site, here, up) => {
+class DevKitU500FPGADesign extends Config(
+  new U500DevKitConfig().alter((site, here, up) => {
     case DesignKey => { (p:Parameters) => new DevKitWrapper()(p) }
   }))

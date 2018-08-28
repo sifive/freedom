@@ -7,16 +7,23 @@ CFLAGS+= -fno-common -g -DENTROPY=0 -mabi=lp64 -DNONSMP_HART=0
 CFLAGS+= -I $(BOOTROM_DIR)/include -I.
 LFLAGS=-static -nostdlib -L $(BOOTROM_DIR)/linker -T sdboot.elf.lds
 
+dts := $(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).dts
 dtb := $(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).dtb
-$(dtb): $(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).dts
+clk := $(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).tl_clock.h
+
+$(clk): $(dts)
+	awk '/tlclk {/ && !f{f=1; next}; f && match($$0, /^.*clock-frequency.*<(.*)>.*/, arr) { print "#define TL_CLK " arr[1] "UL"}' $< > $@.tmp
+	mv $@.tmp $@
+
+$(dtb): $(dts)
 	dtc -I dts -O dtb -o $@ $<
 
 .PHONY: dtb
 dtb: $(dtb)
 
 elf := $(BUILD_DIR)/sdboot.elf
-$(elf): $(dtb) head.S kprintf.c sd.c 
-	$(CC) $(CFLAGS) -DDEVICE_TREE='"$(dtb)"' $(LFLAGS) -o $@ head.S sd.c kprintf.c
+$(elf): $(dtb) head.S kprintf.c sd.c $(clk)
+	$(CC) $(CFLAGS) -include $(clk) -DDEVICE_TREE='"$(dtb)"' $(LFLAGS) -o $@ head.S sd.c kprintf.c
 
 .PHONY: elf
 elf: $(elf)
