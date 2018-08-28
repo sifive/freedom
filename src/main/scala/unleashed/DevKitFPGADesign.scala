@@ -109,8 +109,8 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
     def describe() = Description("chosen", Map())
   }
 
-  // hook up as many PCIe as the board has
-  val pcies = p(PCIeOverlayKey).map(_(PCIeOverlayParams(wranglerNode)))
+  // hook the first PCIe the board has
+  val pcies = p(PCIeOverlayKey).headOption.map(_(PCIeOverlayParams(wranglerNode)))
   pcies.zipWithIndex.map { case((pcieNode, pcieInt), i) =>
     val pciename = Some(s"pcie_$i")
     sbus.fromMaster(pciename) { pcieNode }
