@@ -24,7 +24,6 @@ import sifive.blocks.devices.pinctrl.{BasePin}
 
 import sifive.fpgashells.shell._
 import sifive.fpgashells.clocks._
-import sifive.fpgashells.ip.xilinx.PowerOnResetFPGAOnly
 
 object PinGen {
   def apply(): BasePin = {
@@ -35,12 +34,11 @@ object PinGen {
 class DevKitWrapper()(implicit p: Parameters) extends LazyModule
 {
   val sysClock  = p(ClockInputOverlayKey).head(ClockInputOverlayParams())
-  val sysTap    = ClockIdentityNode()
   val corePLL   = p(PLLFactoryKey)()
   val coreGroup = ClockGroup()
   val wrangler  = LazyModule(new ResetWrangler)
   val coreClock = ClockSinkNode(freqMHz = p(DevKitFPGAFrequencyKey))
-  coreClock := wrangler.node := coreGroup := corePLL := sysTap := sysClock
+  coreClock := wrangler.node := coreGroup := corePLL := sysClock
 
   // removing the debug trait is invasive, so we hook it up externally for now
   val jt = p(JTAGDebugOverlayKey).headOption.map(_(JTAGDebugOverlayParams())).get
@@ -51,14 +49,14 @@ class DevKitWrapper()(implicit p: Parameters) extends LazyModule
     val (core, _) = coreClock.in(0)
     childClock := core.clock
 
-    val djtag     = topMod.module.debug.systemjtag.get
+    val djtag = topMod.module.debug.systemjtag.get
     djtag.jtag.TCK := jt.jtag_TCK
     djtag.jtag.TMS := jt.jtag_TMS
     djtag.jtag.TDI := jt.jtag_TDI
-    jt.jtag_TDO       := djtag.jtag.TDO.data
+    jt.jtag_TDO    := djtag.jtag.TDO.data
 
-    djtag.mfr_id   := p(JtagDTMKey).idcodeManufId.U(11.W)
-    djtag.reset    := PowerOnResetFPGAOnly(sysTap.in(0)._1.clock)
+    djtag.mfr_id := p(JtagDTMKey).idcodeManufId.U(11.W)
+    djtag.reset  := core.reset
 
     childReset := core.reset | topMod.module.debug.ndreset
   }
