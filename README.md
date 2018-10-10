@@ -13,6 +13,13 @@ Both systems boot autonomously and can be controlled via an external debugger.
 Please read the section corresponding to the kit you are interested in for
 instructions on how to use this repo.
 
+After first cloning the freedom repository, you may need to run the following
+command to ensure that the subrepositories are up to date:
+
+```sh
+$ git submodule update --init --recursive
+```
+
 Software Requirement
 --------------------
 
@@ -69,7 +76,7 @@ The Freedom U500 VC707 FPGA Dev Kit implements the Freedom U500 platform.
 ### How to build
 
 The Makefile corresponding to the Freedom U500 VC707 FPGA Dev Kit is
-`Makefile.u500vc707devkit` and it consists of two main targets:
+`Makefile.vc707-u500devkit` and it consists of two main targets:
 
 - `verilog`: to compile the Chisel source files and generate the Verilog files.
 - `mcs`: to create a Configuration Memory File (.mcs) that can be programmed
@@ -78,13 +85,13 @@ onto an VC707 FPGA board.
 To execute these targets, you can run the following commands:
 
 ```sh
-$ make -f Makefile.u500vc707devkit verilog
-$ make -f Makefile.u500vc707devkit mcs
+$ make -f Makefile.vc707-u500devkit verilog
+$ make -f Makefile.vc707-u500devkit mcs
 ```
 
 Note: This flow requires Vivado 2016.4. Newer versions are known to fail.
 
-These will place the files under `builds/u500vc707devkit/obj`.
+These will place the files under `builds/vc707-u500devkit/obj`.
 
 Note that in order to run the `mcs` target, you need to have the `vivado`
 executable on your `PATH`.
