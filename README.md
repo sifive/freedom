@@ -10,15 +10,18 @@ be mapped onto a [VC707 FPGA Evaluation
 Kit](https://www.xilinx.com/products/boards-and-kits/ek-v7-vc707-g.html).
 Both systems boot autonomously and can be controlled via an external debugger.
 
-Please read the section corresponding to the kit you are interested in for
-instructions on how to use this repo.
-
-After first cloning the freedom repository, you may need to run the following
-command to ensure that the subrepositories are up to date:
+Run the following commands to clone the repository and get started:
 
 ```sh
+$ git clone https://github.com/sifive/freedom.git
+$ cd freedom
+
+#Run this command to update subrepositories used by freedom
 $ git submodule update --init --recursive
 ```
+
+Next, read the section corresponding to the kit you are interested in for
+instructions on how to use this repo.
 
 Software Requirement
 --------------------
