@@ -68,11 +68,6 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
     with HasPeripheryMaskROMSlave
     with HasPeripheryDebug
 {
-  // Error device used for testing and to NACK invalid front port transactions
-  val error = LazyModule(new TLError(p(ErrorDeviceKey), sbus.beatBytes))
-  // always buffer the error device because no one cares about its latency
-  pbus.coupleTo("slave_named_error") { error.node := TLBuffer() := _ }
-
   val tlclock = new FixedClockResource("tlclk", p(DevKitFPGAFrequencyKey))
 
   // hook up UARTs, based on configuration and available overlays
@@ -98,9 +93,8 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
 
 
   // TODO: currently, only hook up one memory channel
-  require(nMemoryChannels == 1, "Core complex must have 1 master memory port")
-  val ddr = p(DDROverlayKey).headOption.map(_(DDROverlayParams(p(ExtMem).get.base, wranglerNode)))
-  ddr.get := memBuses.head.toDRAMController(Some("xilinxvc707mig"))()
+  val ddr = p(DDROverlayKey).headOption.map(_(DDROverlayParams(p(ExtMem).get.master.base, wranglerNode)))
+  ddr.get := mbus.toDRAMController(Some("xilinxvc707mig"))()
 
   // Work-around for a kernel bug (command-line ignored if /chosen missing)
   val chosen = new DeviceSnippet {
