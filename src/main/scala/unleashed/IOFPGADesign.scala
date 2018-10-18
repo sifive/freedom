@@ -58,7 +58,7 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
   val sbar = LazyModule(new TLXbar)
   val xbar = LazyModule(new TLXbar)
   val mbar = LazyModule(new TLXbar)
-  val serr = LazyModule(new TLError(ErrorParams(Seq(AddressSet(0x2f00000000L, 0x7fffffffL)), 8, 128, true), beatBytes = 8))
+  val serr = LazyModule(new TLError(DevNullParams(Seq(AddressSet(0x2f00000000L, 0x7fffffffL)), 8, 128, region = RegionType.TRACKED), beatBytes = 8))
   val dtbrom = LazyModule(new TLROM(0x2ff0000000L, 0x10000, dtb.contents, executable = false, beatBytes = 8))
   val msimaster = LazyModule(new MSIMaster(Seq(MSITarget(address=0x2020000, spacing=4, number=10))))
   // We only support the first DDR or PCIe controller in this design

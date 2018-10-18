@@ -33,13 +33,13 @@ class E300DevKitPeripherals extends Config((site, here, up) => {
     PWMParams(address = 0x10025000, cmpWidth = 16),
     PWMParams(address = 0x10035000, cmpWidth = 16))
   case PeripherySPIKey => List(
-    SPIParams(csWidth = 4, rAddress = 0x10024000, sampleDelay = 3),
-    SPIParams(csWidth = 1, rAddress = 0x10034000, sampleDelay = 3))
+    SPIParams(csWidth = 4, rAddress = 0x10024000, defaultSampleDel = 3),
+    SPIParams(csWidth = 1, rAddress = 0x10034000, defaultSampleDel = 3))
   case PeripherySPIFlashKey => List(
     SPIFlashParams(
       fAddress = 0x20000000,
       rAddress = 0x10014000,
-      sampleDelay = 3))
+      defaultSampleDel = 3))
   case PeripheryUARTKey => List(
     UARTParams(address = 0x10013000),
     UARTParams(address = 0x10023000))

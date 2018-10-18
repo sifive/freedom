@@ -82,7 +82,7 @@ class IOFPGA(
   val sbar = LazyModule(new TLXbar)
   val xbar = LazyModule(new TLXbar)
   val mbar = LazyModule(new TLXbar)
-  val serr = LazyModule(new TLError(ErrorParams(Seq(AddressSet(0x2800000000L, 0xffffffffL)), 8, 128, true), beatBytes = 8))
+  val serr = LazyModule(new TLError(DevNullParams(Seq(AddressSet(0x2800000000L, 0xffffffffL)), 8, 128), beatBytes = 8))
   val gpio = LazyModule(new TLGPIO(busWidthBytes = 8, params = gpioparams))
   val gpiosink = gpio.ioNode.makeSink
   val polarfirepcie = LazyModule(new PolarFireEvalKitPCIeX4)
