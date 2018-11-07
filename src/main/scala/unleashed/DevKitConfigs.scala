@@ -17,9 +17,12 @@ import sifive.blocks.devices.uart._
 class FreedomU500Config extends Config(
   new WithJtagDTM            ++
   new WithNMemoryChannels(1) ++
-  new WithNBigCores(4)       ++
   new BaseConfig
 )
+
+class WithOneCore extends Config(new WithNBigCores(1))
+
+class WithFourCores extends Config(new WithNBigCores(4))
 
 // Freedom U500 Dev Kit Peripherals
 class U500DevKitPeripherals extends Config((site, here, up) => {

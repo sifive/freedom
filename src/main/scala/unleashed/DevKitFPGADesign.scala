@@ -23,7 +23,10 @@ import sifive.blocks.devices.gpio._
 import sifive.blocks.devices.pinctrl.{BasePin}
 
 import sifive.fpgashells.shell._
+import sifive.fpgashells.ip.xilinx._
 import sifive.fpgashells.clocks._
+import sifive.fpgashells.devices.xilinx.xilinxarty100tmig._
+
 
 object PinGen {
   def apply(): BasePin = {
@@ -48,7 +51,7 @@ class DevKitWrapper()(implicit p: Parameters) extends LazyModule
   override lazy val module = new LazyRawModuleImp(this) {
     val (core, _) = coreClock.in(0)
     childClock := core.clock
-
+    
     val djtag = topMod.module.debug.systemjtag.get
     djtag.jtag.TCK := jt.jtag_TCK
     djtag.jtag.TMS := jt.jtag_TMS
@@ -56,7 +59,7 @@ class DevKitWrapper()(implicit p: Parameters) extends LazyModule
     jt.jtag_TDO    := djtag.jtag.TDO.data
 
     djtag.mfr_id := p(JtagDTMKey).idcodeManufId.U(11.W)
-    djtag.reset  := core.reset
+    djtag.reset  := PowerOnResetFPGAOnly(core.clock)
 
     childReset := core.reset | topMod.module.debug.ndreset
   }
@@ -94,7 +97,13 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
 
   // TODO: currently, only hook up one memory channel
   val ddr = p(DDROverlayKey).headOption.map(_(DDROverlayParams(p(ExtMem).get.master.base, wranglerNode)))
-  ddr.get := mbus.toDRAMController(Some("xilinxvc707mig"))()
+  ddr.foreach { _ := mbus.toDRAMController(Some("xilinxmig"))() }
+  if (ddr.isEmpty) {
+    val mparams = p(ExtMem).get.master
+    val address = AddressSet(mparams.base, (mparams.size min 0x10000) - 1)
+    val sram = LazyModule(new TLRAM(address, beatBytes = mbus.beatBytes))
+    sram.node := TLFragmenter(mbus.beatBytes, mbus.blockBytes) := mbus.toDRAMController(Some("sram-main-memory"))()
+  }
 
   // Work-around for a kernel bug (command-line ignored if /chosen missing)
   val chosen = new DeviceSnippet {
@@ -110,7 +119,7 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
     ibus.fromSync := pcieInt
   }
 
-  // LEDs / GPIOs
+  // LEDs / Switches / GPIOs
   val gpioParams = p(PeripheryGPIOKey)
   val gpios = gpioParams.map { case(params) =>
     val g = GPIO.attach(GPIOAttachParams(gpio = params, pbus, ibus.fromAsync))
@@ -118,6 +127,8 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
   }
 
   val leds = p(LEDOverlayKey).headOption.map(_(LEDOverlayParams()))
+
+  val switches = p(SwitchOverlayKey).headOption.map(_(SwitchOverlayParams()))
 
   override lazy val module = new U500VC707DevKitSystemModule(this)
 }
@@ -131,15 +142,20 @@ class U500VC707DevKitSystemModule[+L <: DevKitFPGADesign](_outer: L)
   val maskROMParams = p(PeripheryMaskROMKey)
   global_reset_vector := maskROMParams(0).address.U
 
-  // hook up GPIOs to LEDs
+  // hook up GPIOs to LEDs and switches
   val gpioParams = _outer.gpioParams
   val gpio_pins = Wire(new GPIOPins(() => PinGen(), gpioParams(0)))
 
-  GPIOPinsFromPort(gpio_pins, _outer.gpios(0).bundle)
+  GPIOPinsFromPort(gpio_pins, _outer.gpios(0).bundle) 
 
   gpio_pins.pins.foreach { _.i.ival := Bool(false) }
   val gpio_cat = Cat(Seq.tabulate(gpio_pins.pins.length) { i => gpio_pins.pins(i).o.oval })
-  _outer.leds.get := gpio_cat
+  val led_cat = Cat(clock.asUInt, reset.asUInt, true.B)
+  _outer.leds.get := led_cat
+
+  (gpio_pins.pins.drop(_outer.leds.get.getWidth) zip _outer.switches.get.toBools) foreach {
+    case (gpio, sw) => gpio.i.ival := sw
+  }
 }
 
 // Allow frequency of the design to be controlled by the Makefile

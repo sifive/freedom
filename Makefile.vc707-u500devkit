@@ -5,7 +5,7 @@ FPGA_DIR := $(base_dir)/fpga-shells/xilinx
 PROJECT := sifive.fpgashells.shell.xilinx
 MODEL := VC707Shell
 export CONFIG_PROJECT := sifive.freedom.unleashed
-export CONFIG := DevKitU500FPGADesign_WithDevKit50MHz
+export CONFIG := DevKitU500FPGADesign_WithDevKit50MHz_WithFourCores
 export BOARD := vc707
 export BOOTROM_DIR := $(base_dir)/bootrom/sdboot
 
