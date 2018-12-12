@@ -46,7 +46,7 @@ class DevKitWrapper()(implicit p: Parameters) extends LazyModule
   // removing the debug trait is invasive, so we hook it up externally for now
   val jt = p(JTAGDebugOverlayKey).headOption.map(_(JTAGDebugOverlayParams())).get
 
-  val topMod = LazyModule(new DevKitFPGADesign(wrangler.node)(p))
+  val topMod = LazyModule(new DevKitFPGADesign(wrangler.node, corePLL)(p))
 
   override lazy val module = new LazyRawModuleImp(this) {
     val (core, _) = coreClock.in(0)
@@ -67,7 +67,7 @@ class DevKitWrapper()(implicit p: Parameters) extends LazyModule
 
 case object DevKitFPGAFrequencyKey extends Field[Double](100.0)
 
-class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) extends RocketSubsystem
+class DevKitFPGADesign(wranglerNode: ClockAdapterNode, mainPLL: PLLNode)(implicit p: Parameters) extends RocketSubsystem
     with HasPeripheryMaskROMSlave
     with HasPeripheryDebug
 {
@@ -96,7 +96,7 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
 
 
   // TODO: currently, only hook up one memory channel
-  val ddr = p(DDROverlayKey).headOption.map(_(DDROverlayParams(p(ExtMem).get.master.base, wranglerNode)))
+  val ddr = p(DDROverlayKey).headOption.map(_(DDROverlayParams(p(ExtMem).get.master.base, wranglerNode, mainPLL)))
   ddr.foreach { _ := mbus.toDRAMController(Some("xilinxmig"))() }
   if (ddr.isEmpty) {
     val mparams = p(ExtMem).get.master
@@ -150,7 +150,7 @@ class U500VC707DevKitSystemModule[+L <: DevKitFPGADesign](_outer: L)
 
   gpio_pins.pins.foreach { _.i.ival := Bool(false) }
   val gpio_cat = Cat(Seq.tabulate(gpio_pins.pins.length) { i => gpio_pins.pins(i).o.oval })
-  val led_cat = Cat(clock.asUInt, reset.asUInt, true.B)
+  val led_cat = Cat(clock.asUInt, reset.asUInt)
   _outer.leds.get := led_cat
 
   (gpio_pins.pins.drop(_outer.leds.get.getWidth) zip _outer.switches.get.toBools) foreach {

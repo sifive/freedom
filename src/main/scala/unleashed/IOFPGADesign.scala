@@ -62,7 +62,7 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
   val dtbrom = LazyModule(new TLROM(0x2ff0000000L, 0x10000, dtb.contents, executable = false, beatBytes = 8))
   val msimaster = LazyModule(new MSIMaster(Seq(MSITarget(address=0x2020000, spacing=4, number=10))))
   // We only support the first DDR or PCIe controller in this design
-  val ddr = p(DDROverlayKey).headOption.map(_(DDROverlayParams(0x3000000000L, wrangler.node)))
+  val ddr = p(DDROverlayKey).headOption.map(_(DDROverlayParams(0x3000000000L, wrangler.node, corePLL)))
   val pcieControllers = p(PCIeOverlayKey).size
   val lowBarSize = if (pcieControllers == 1) 0x20000000 else 0x10000000
   val pcieAddrs = Seq(
