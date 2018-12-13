@@ -103,3 +103,30 @@ executable on your `PATH`.
 
 The default bootrom consists of a bootloader that loads a program off the SD
 card slot on the VC707 board.
+
+IntelliJ Setup
+-------------------------------
+This subsection will help you to setup IntelliJ.  
+The steps will describe what options you have to choose to get a seemingless build.  
+If not otherwise stated, simply press next in the corresponding dialog to get to the next step.
+
+1. Select "Import project"  
+![Welcome screen](documentation/intellij-setup-01-welcome-screen.png)
+
+2. Locate the root folder of the freedom repository  
+![Folder window](documentation/intellij-setup-02-find-freedom-folder.png)
+
+3. Select sbt as a external model to import the project from  
+![Model import selection](documentation/intellij-setup-03-select-sbt-import.png)
+
+4. Check the option to use the sbt shell for build and import  
+![Project sbt setting](documentation/intellij-setup-04-import-project-source-and-sbt-settings.png)
+
+5. The IDE will open and tries to import the freedom package. This will fail because IntelliJ tries to build all submodules with the version of the individual build.sbt file. Continue with the next step  
+![IDE window](documentation/intellij-setup-05-first-ide-start.png)
+
+6. Switch to the sbt shell and enter ++2.12.4  
+![IDE sbt shell window](documentation/intellij-setup-06-sbt-shell-version-setting.png)
+
+Done. IntelliJ now should be able to build the repository and show you code highlighting.
+You might need to hit reimport in the Build view which can be seen in step 5.
