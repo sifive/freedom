@@ -20,7 +20,7 @@ import sifive.blocks.devices.chiplink._
 import sifive.fpgashells.shell.microsemi.verashell.{VeraShell,HasPCIe,HasDDR3,HasPFEvalKitChipLink}
 import sifive.fpgashells.devices.microsemi.polarfireevalkitpciex4._
 import sifive.freedom.unleashed.u500vera.FreedomVeraConfig
-import sifive.fpgashells.ip.microsemi.CLKINT
+import sifive.fpgashells.ip.microsemi.CLKBUF
 import sifive.fpgashells.ip.microsemi.polarfiredll._
 import sifive.fpgashells.ip.microsemi.polarfireccc._
 
@@ -131,21 +131,25 @@ class IOFPGA(
     io.chiplink <> link.module.io.port
 
     // Take the b2c clock from an input pin
-    val chiplink_rx_clkint = Module(new CLKINT)
-    chiplink_rx_clkint.io.A := io.chiplink.b2c.clk
+    val chiplink_rx_clkbuf = Module(new CLKBUF)
+    chiplink_rx_clkbuf.io.PAD := io.chiplink.b2c.clk
 
-    // Skew the RX clock to sample in the data eye
-    val chiplink_rx_pll = Module(new PolarFireCCC(PolarFireCCCParameters(
-       name = "chiplink_rx_pll",
-       pll_in_freq     = 125.0,
-       gl0Enabled      = true,
-       gl1Enabled      = true,
-       gl0_0_out_freq  = 125.0,
-       gl1_0_out_freq  = 125.0,
-       gl1_0_pll_phase = 240)))
-    val lock = chiplink_rx_pll.io.PLL_LOCK_0
-    chiplink_rx_pll.io.REF_CLK_0 := chiplink_rx_clkint.io.Y
-    link.module.io.port.b2c.clk := chiplink_rx_pll.io.OUT1_FABCLK_0.get
+    //commenting - dedicated clock path and an input IO tap delay is used to skew rx clock
+    // Skew the RX clock to sample in the data eye    
+    //val chiplink_rx_pll = Module(new PolarFireCCC(PolarFireCCCParameters(
+    //   name = "chiplink_rx_pll",
+    //   pll_in_freq     = 125.0,
+    //   gl0Enabled      = true,
+    //   gl1Enabled      = true,
+    //   gl0_0_out_freq  = 125.0,
+    //   gl1_0_out_freq  = 125.0,
+    //   gl1_0_pll_phase = 240)))
+    //val lock = chiplink_rx_pll.io.PLL_LOCK_0
+    //chiplink_rx_pll.io.REF_CLK_0 := chiplink_rx_clkbuf.io.Y
+    //link.module.io.port.b2c.clk := chiplink_rx_pll.io.OUT1_FABCLK_0.get
+
+    val lock = Bool(true) //UInt("b1")
+    link.module.io.port.b2c.clk := chiplink_rx_clkbuf.io.Y
 
     // Use a phase-adjusted c2b_clk to meet timing constraints
     io.chiplink.c2b.clk := io.tx_clock
