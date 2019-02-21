@@ -1,0 +1,5 @@
+global def freedomProject =
+  def deps = rocketchipProject, fpgaShellsProject, sifiveBlocksProject, nvdlaProject, Nil
+  millScalaProject "Freedom" here deps "freedom" "FreedomBase"
+
+publish scalaProjects = freedomProject

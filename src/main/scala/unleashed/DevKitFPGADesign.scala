@@ -65,7 +65,6 @@ class DevKitWrapper()(implicit p: Parameters) extends LazyModule
 case object DevKitFPGAFrequencyKey extends Field[Double](100.0)
 
 class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) extends RocketSubsystem
-    with HasPeripheryMaskROMSlave
     with HasPeripheryDebug
 {
   val tlclock = new FixedClockResource("tlclk", p(DevKitFPGAFrequencyKey))
@@ -91,6 +90,8 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
     }
   } }
 
+  val maskROMParams = MaskROMParams(address = 0x10000, name = "BootROM")
+  MaskROM.attach(maskROMParams, cbus)
 
   // TODO: currently, only hook up one memory channel
   val ddr = p(DDROverlayKey).headOption.map(_(DDROverlayParams(p(ExtMem).get.master.base, wranglerNode)))
@@ -128,8 +129,7 @@ class U500VC707DevKitSystemModule[+L <: DevKitFPGADesign](_outer: L)
     with HasPeripheryDebugModuleImp
 {
   // Reset vector is set to the location of the mask rom
-  val maskROMParams = p(PeripheryMaskROMKey)
-  global_reset_vector := maskROMParams(0).address.U
+  global_reset_vector := outer.maskROMParams.address.U
 
   // hook up GPIOs to LEDs
   val gpioParams = _outer.gpioParams
