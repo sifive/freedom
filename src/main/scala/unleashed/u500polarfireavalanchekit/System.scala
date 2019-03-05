@@ -4,7 +4,6 @@ package sifive.freedom.unleashed.u500polarfireavalanchekit
 import Chisel._
 
 import freechips.rocketchip.config._
-//import freechips.rocketchip.coreplex._
 import freechips.rocketchip.subsystem._
 import freechips.rocketchip.devices.debug._
 import freechips.rocketchip.devices.tilelink._
@@ -12,12 +11,10 @@ import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.system._
 
 import sifive.blocks.devices.gpio._
-import sifive.blocks.devices.spi._
 import sifive.blocks.devices.uart._
 
 import sifive.fpgashells.devices.microsemi.polarfireddr3._
-import sifive.fpgashells.devices.microsemi.polarfireddr4._
-import sifive.fpgashells.devices.microsemi.polarfireevalkitpciex4._
+
 
 //-------------------------------------------------------------------------
 // U500PolarFireEvalKitSystem
@@ -25,27 +22,18 @@ import sifive.fpgashells.devices.microsemi.polarfireevalkitpciex4._
 
 //class U500PolarFireAvalancheKitSystem(implicit p: Parameters) extends RocketCoreplex
 class U500PolarFireAvalancheKitSystem(implicit p: Parameters) extends RocketSubsystem
-    //with HasPeripheryMaskROMSlave
     with HasPeripheryDebug
-    //with HasSystemErrorSlave
     with HasPeripheryUART
-    //with HasPeripherySPI
     with HasPeripheryGPIO
-//    with HasCoreJTAGDebug
-//    with HasMemoryPolarFireEvalKitDDR4
-    with HasMemoryPolarFireEvalKitDDR3
-    //with HasSystemPolarFireEvalKitPCIeX4
-    {
+    with HasMemoryPolarFireEvalKitDDR3{
   override lazy val module = new U500PolarFireAvalancheKitSystemModule(this)
 }
 
 class U500PolarFireAvalancheKitSystemModule[+L <: U500PolarFireAvalancheKitSystem](_outer: L)
   extends RocketSubsystemModuleImp(_outer)
-//  extends RocketCoreplexModule(_outer)
     with HasRTCModuleImp
     with HasPeripheryDebugModuleImp
     with HasPeripheryUARTModuleImp
-    //with HasPeripherySPIModuleImp
     with HasPeripheryGPIOModuleImp
     with HasMemoryPolarFireEvalKitDDR3ModuleImp
     //with HasSystemPolarFireEvalKitPCIeX4ModuleImp

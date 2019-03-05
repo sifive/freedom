@@ -33,8 +33,6 @@ class U500PolarFireAvalancheKitPeripherals extends Config((site, here, up) => {
     SPIParams(rAddress = BigInt(0x64001000L)))
   case PeripheryGPIOKey => List(
     GPIOParams(address = BigInt(0x64002000L), width = 4))
-  /*case PeripheryMaskROMKey => List(
-    MaskROMParams(address = 0x10000, name = "BootROM"))*/
 })
 
 // Freedom U500 PolarFire Avalanche Kit
@@ -42,11 +40,9 @@ class U500PolarFireAvalancheKitConfig extends Config(
   new WithNExtTopInterrupts(0)   ++
   new U500PolarFireAvalancheKitPeripherals ++
   new FreedomUPolarFireAvalancheKitConfig ().alter((site,here,up) => {
-  //  case ErrorParams => ErrorParams(Seq(AddressSet(0x3000, 0xfff)), maxAtomic=site(XLen)/8, maxTransfer=128)
     case PeripheryBusKey => up(PeripheryBusKey, site).copy(frequency = 50000000) // 50 MHz hperiphery
     case MemoryMicrosemiDDR3Key => PolarFireEvalKitDDR3Params(address = Seq(AddressSet(0x80000000L,0x40000000L-1))) //1GB
     case DTSTimebase => BigInt(1000000)
-    //case ExtMem => up(ExtMem).map(_.copy(size = 0x40000000L))
     case JtagDTMKey => new JtagDTMConfig (
       idcodeVersion = 2,      // 1 was legacy (FE310-G000, Acai).
       idcodePartNum = 0x000,  // Decided to simplify.
