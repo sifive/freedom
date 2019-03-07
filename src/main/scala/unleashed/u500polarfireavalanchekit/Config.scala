@@ -2,7 +2,6 @@
 package sifive.freedom.unleashed.u500polarfireavalanchekit
 
 import freechips.rocketchip.config._
-//import freechips.rocketchip.coreplex._
 import freechips.rocketchip.subsystem._
 import freechips.rocketchip.devices.debug._
 import freechips.rocketchip.devices.tilelink._
@@ -14,8 +13,8 @@ import sifive.blocks.devices.gpio._
 import sifive.blocks.devices.spi._
 import sifive.blocks.devices.uart._
 
-import sifive.fpgashells.devices.microsemi.polarfireddr3.{MemoryMicrosemiDDR3Key, PolarFireEvalKitDDR3Params}
-import sifive.fpgashells.devices.microsemi.polarfireddr4.{MemoryMicrosemiDDR4Key, PolarFireEvalKitDDR4Params}
+import sifive.fpgashells.devices.microsemi.polarfireddr3.{MemoryMicrosemiAvalancheBoardDDR3Key, PolarFireAvalancheBoardDDR3Params}
+
 
 // Default FreedomU PolarFire Avalanche Kit Config
 class FreedomUPolarFireAvalancheKitConfig  extends Config(
@@ -41,7 +40,7 @@ class U500PolarFireAvalancheKitConfig extends Config(
   new U500PolarFireAvalancheKitPeripherals ++
   new FreedomUPolarFireAvalancheKitConfig ().alter((site,here,up) => {
     case PeripheryBusKey => up(PeripheryBusKey, site).copy(frequency = 50000000) // 50 MHz hperiphery
-    case MemoryMicrosemiDDR3Key => PolarFireEvalKitDDR3Params(address = Seq(AddressSet(0x80000000L,0x40000000L-1))) //1GB
+    case MemoryMicrosemiAvalancheBoardDDR3Key => PolarFireAvalancheBoardDDR3Params(address = Seq(AddressSet(0x80000000L,0x40000000L-1))) //1GB
     case DTSTimebase => BigInt(1000000)
     case JtagDTMKey => new JtagDTMConfig (
       idcodeVersion = 2,      // 1 was legacy (FE310-G000, Acai).

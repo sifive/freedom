@@ -25,7 +25,7 @@ class U500PolarFireAvalancheKitSystem(implicit p: Parameters) extends RocketSubs
     with HasPeripheryDebug
     with HasPeripheryUART
     with HasPeripheryGPIO
-    with HasMemoryPolarFireEvalKitDDR3{
+    with HasMemoryPolarFireAvalancheBoardDDR3{
   override lazy val module = new U500PolarFireAvalancheKitSystemModule(this)
 }
 
@@ -35,7 +35,7 @@ class U500PolarFireAvalancheKitSystemModule[+L <: U500PolarFireAvalancheKitSyste
     with HasPeripheryDebugModuleImp
     with HasPeripheryUARTModuleImp
     with HasPeripheryGPIOModuleImp
-    with HasMemoryPolarFireEvalKitDDR3ModuleImp
+    with HasMemoryPolarFireAvalancheBoardDDR3ModuleImp
     //with HasSystemPolarFireEvalKitPCIeX4ModuleImp
     {
   // Reset vector is set to the location of the mask rom

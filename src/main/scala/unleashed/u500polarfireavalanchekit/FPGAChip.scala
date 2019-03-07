@@ -10,7 +10,7 @@ import freechips.rocketchip.diplomacy._
 import sifive.blocks.devices.gpio._
 import sifive.blocks.devices.pinctrl.{BasePin}
 
-import sifive.fpgashells.devices.microsemi.polarfireddr4._
+import sifive.fpgashells.devices.microsemi.polarfireddr3._
 import sifive.fpgashells.shell.microsemi.polarfireavalanchekitshell._
 
 //-------------------------------------------------------------------------
@@ -30,7 +30,6 @@ object PinGen {
 
 class U500PolarFireAvalancheKitFPGAChip(implicit override val p: Parameters)
     extends PolarFireAvalancheKitShell
-    //with HasPCIe
     with HasDDR3 {
 
   //-----------------------------------------------------------------------
@@ -38,7 +37,6 @@ class U500PolarFireAvalancheKitFPGAChip(implicit override val p: Parameters)
   //-----------------------------------------------------------------------
 
   // Connect the clock to the 50 Mhz output from the PLL
-//<CJ>  dut_clock := clk50
   withClockAndReset(dut_clock, dut_reset) {
     val dut = Module(LazyModule(new U500PolarFireAvalancheKitSystem).module)
 
@@ -47,9 +45,7 @@ class U500PolarFireAvalancheKitFPGAChip(implicit override val p: Parameters)
     //---------------------------------------------------------------------
 
     connectDebugJTAG(dut)
-    //connectSPI      (dut)
     connectUART     (dut)
-    //connectPCIe     (dut)
     connectMIG      (dut)
 
     //---------------------------------------------------------------------
