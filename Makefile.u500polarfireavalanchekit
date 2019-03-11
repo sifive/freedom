@@ -6,7 +6,7 @@ MODEL := U500PolarFireAvalancheKitFPGAChip
 PROJECT :=  sifive.freedom.unleashed.u500polarfireavalanchekit
 CONFIG_PROJECT := sifive.freedom.unleashed.u500polarfireavalanchekit
 export CONFIG := U500PolarFireAvalancheKitConfig
-export BOARD := vc707
+export BOARD := polarfireavalancheboard
 export BOOTROM_DIR := $(base_dir)/bootrom/sdboot
 
 rocketchip_dir := $(base_dir)/rocket-chip
