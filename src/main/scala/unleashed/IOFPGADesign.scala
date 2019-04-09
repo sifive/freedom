@@ -47,12 +47,12 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
 
   // Core clocking
   val sysClock  = p(ClockInputOverlayKey).head(ClockInputOverlayParams())
-  val sysTap    = ClockIdentityNode()
   val corePLL   = p(PLLFactoryKey)()
   val coreGroup = ClockGroup()
+  val coreTap    = ClockIdentityNode()
   val wrangler  = LazyModule(new ResetWrangler)
   val coreClock = ClockSinkNode(freqMHz = p(IOFPGAFrequencyKey))
-  coreClock := wrangler.node := coreGroup := corePLL := sysTap := sysClock
+  coreClock := wrangler.node := coreTap := coreGroup := corePLL := sysClock
 
   // SoC components
   val sbar = LazyModule(new TLXbar)
@@ -62,7 +62,7 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
   val dtbrom = LazyModule(new TLROM(0x2ff0000000L, 0x10000, dtb.contents, executable = false, beatBytes = 8))
   val msimaster = LazyModule(new MSIMaster(Seq(MSITarget(address=0x2020000, spacing=4, number=10))))
   // We only support the first DDR or PCIe controller in this design
-  val ddr = p(DDROverlayKey).headOption.map(_(DDROverlayParams(0x3000000000L, wrangler.node)))
+  val ddr = p(DDROverlayKey).headOption.map(_(DDROverlayParams(0x3000000000L, wrangler.node, corePLL)))
   val pcieControllers = p(PCIeOverlayKey).size
   val lowBarSize = if (pcieControllers == 1) 0x20000000 else 0x10000000
   val pcieAddrs = Seq(
@@ -96,11 +96,11 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
   (link
     := TLBuffer(BufferParams.none, BufferParams.default)
     := oTap
-    := TLBuffer(BufferParams.default, BufferParams.none)
+    := TLBuffer(BufferParams.pipe, BufferParams.none)
     := mbar.node)
 
   (xbar.node
-    := TLBuffer(BufferParams.none, BufferParams.default)
+    := TLBuffer(BufferParams.none, BufferParams.pipe)
     := iTap
     := TLBuffer(BufferParams.default, BufferParams.none)
     := link)
@@ -169,7 +169,7 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
   lazy val module = new LazyRawModuleImp(this) {
     println(dts)
 
-    val (core, _) = coreClock.in(0)
+    val (core, coreEdge) = coreClock.in(0)
     childClock := core.clock
     childReset := core.reset
 
@@ -193,10 +193,10 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
       RegNext(count(iTap.out(0)) + count(oTap.out(0)))
     }
 
-    val (sys, sysEdge) = sysTap.out(0)
-    val toggle = withClockAndReset(sys.clock, sys.reset) {
+    val (tap, _) = coreTap.in(0)
+    val toggle = withClockAndReset(tap.clock, ResetCatchAndSync(tap.clock, tap.reset)) {
       // Blink LEDs to indicate clock good
-      val hz = UInt((sysEdge.clock.freqMHz * 1000000.0).toLong)
+      val hz = UInt((coreEdge.clock.freqMHz * 1000000.0).toLong)
       val divider = RegInit(hz)
       val oneSecond = divider === UInt(0)
       divider := Mux(oneSecond, hz, divider - UInt(1))
@@ -224,6 +224,7 @@ class WithFrequency(MHz: Double) extends Config((site, here, up) => {
 class With100MHz extends WithFrequency(100)
 class With125MHz extends WithFrequency(125)
 class With150MHz extends WithFrequency(150)
+class With166MHz extends WithFrequency(166.666)
 class With200MHz extends WithFrequency(200)
 
 class WithNVDLA(config: String) extends Config((site, here, up) => {
