@@ -32,6 +32,27 @@ set the $(RISCV) environment variable to point to the location of where the
 RISC-V toolchains are installed. You can build the toolchain from scratch
 or download the tools here: https://www.sifive.com/products/tools/
 
+After installing toolchain and vivado, you must set the environment variables.
+
+If you have installed toolchain to
+`/home/riscv/riscv64-elf-tc/bin/riscv64-unknown-elf-gcc`
+then run the following command. Do not include /bin at the end of the string.
+
+```sh
+$ export RISCV=/home/riscv/riscv64-elf-tc
+```
+
+In order to run the `mcs` target in the next step, you need to have the `vivado`
+executable on your `PATH`.
+
+If vivado is installed to `/tools/Xilinx/Vivado/2016.4/bin`,
+you can set the `PATH` with the following command.
+```sh
+$ export PATH=${PATH}:/tools/Xilinx/Vivado/2016.4/bin
+```
+Change the line above if the `vivado` is installed to
+`/opt/Xilinx/Vivado/2016.4/bin` accordingly.
+
 
 Freedom E300 Arty FPGA Dev Kit
 ------------------------------
@@ -58,8 +79,6 @@ Note: This flow requires Vivado 2017.1. Old versions are known to fail.
 
 These will place the files under `builds/e300artydevkit/obj`.
 
-Note that in order to run the `mcs` target, you need to have the `vivado`
-executable on your `PATH`.
 
 ### Bootrom
 
@@ -96,10 +115,12 @@ Note: This flow requires Vivado 2016.4. Newer versions are known to fail.
 
 These will place the files under `builds/vc707-u500devkit/obj`.
 
-Note that in order to run the `mcs` target, you need to have the `vivado`
-executable on your `PATH`.
-
 ### Bootrom
 
 The default bootrom consists of a bootloader that loads a program off the SD
 card slot on the VC707 board.
+
+### Linux boot Image
+
+The bootable Linux image for vc707 is able to build from the link
+[SD boot image](https://github.com/sifive/freedom-u-sdk).
