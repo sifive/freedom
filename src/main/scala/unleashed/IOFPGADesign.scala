@@ -70,7 +70,7 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
     (0x2d00000000L, Seq(AddressSet(0x2400000000L, 0x3ffffffffL), AddressSet(0x40000000+lowBarSize, lowBarSize-1))),
     (0x2e00000000L, Seq(AddressSet(0x2400000000L, 0x3ffffffffL))))
   val (pcie, pcieInt) = p(PCIeOverlayKey).zipWithIndex.map { case (overlay, i) =>
-    pcieAddrs(i) match { case (ecam, bars) => overlay(PCIeOverlayParams(wrangler.node, bars, ecam)) }
+    pcieAddrs(i) match { case (ecam, bars) => overlay(PCIeOverlayParams(wrangler.node, bars, ecam, corePLL)) }
   }.unzip
   // We require ChipLink, though, obviously
   val link = p(ChipLinkOverlayKey).head(ChipLinkOverlayParams(

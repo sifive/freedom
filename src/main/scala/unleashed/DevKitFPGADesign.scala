@@ -102,7 +102,7 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode, corePLL: PLLNode)(implici
   }
 
   // hook the first PCIe the board has
-  val pcies = p(PCIeOverlayKey).headOption.map(_(PCIeOverlayParams(wranglerNode)))
+  val pcies = p(PCIeOverlayKey).headOption.map(_(PCIeOverlayParams(wranglerNode, corePLL = corePLL)))
   pcies.zipWithIndex.map { case((pcieNode, pcieInt), i) =>
     val pciename = Some(s"pcie_$i")
     sbus.fromMaster(pciename) { pcieNode }

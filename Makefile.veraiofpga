@@ -6,7 +6,7 @@ FPGA_DIR := $(base_dir)/fpga-shells/microsemi
 PROJECT := sifive.fpgashells.shell.microsemi
 MODEL := VeraShell
 export CONFIG_PROJECT := sifive.freedom.unleashed
-export CONFIG := IOFPGAConfig_With125MHz
+export CONFIG := IOFPGAConfig_With100MHz
 export BOARD := vera
 
 rocketchip_dir := $(base_dir)/rocket-chip
