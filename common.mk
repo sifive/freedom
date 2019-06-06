@@ -26,6 +26,8 @@ EXTRA_FPGA_VSRCS ?=
 PATCHVERILOG ?= ""
 BOOTROM_DIR ?= ""
 
+proj_name = $(BOARD)_freedom_$(CONFIG)
+
 base_dir := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 export rocketchip_dir := $(base_dir)/rocket-chip
 SBT ?= java -jar $(rocketchip_dir)/sbt-launch.jar
@@ -75,6 +77,23 @@ romgen: $(romgen)
 f := $(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).vsrcs.F
 $(f):
 	echo $(VSRCS) > $@
+
+# Build .xpr
+project := $(BUILD_DIR)/$(proj_name)/$(proj_name).xpr
+$(project): $(romgen) $(f)
+	cd $(BUILD_DIR); vivado \
+		-nojournal -mode batch \
+		-source $(fpga_common_script_dir)/project.tcl \
+		-tclargs \
+		-top-module "$(MODEL)" \
+		-F "$(f)" \
+		-ip-vivado-tcls "$(shell find '$(BUILD_DIR)' -name '*.project.tcl')" \
+		-board "$(BOARD)" \
+		-config "$(CONFIG)" 
+project: $(project)
+
+vivado: $(project)
+	vivado -nojournal -nolog $(project) 
 
 bit := $(BUILD_DIR)/obj/$(MODEL).bit
 $(bit): $(romgen) $(f)

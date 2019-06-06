@@ -1,0 +1,22 @@
+# See LICENSE for license details.
+base_dir := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
+BUILD_DIR := $(base_dir)/builds/e300zybodevkit
+FPGA_DIR := $(base_dir)/fpga-shells/xilinx
+MODEL := E300ZyboDevKitFPGAChip
+PROJECT := sifive.freedom.everywhere.e300zybodevkit
+CONFIG_PROJECT := sifive.freedom.everywhere.e300zybodevkit
+export CONFIG := E300ZyboDevKitConfig
+export BOARD := zybo
+export BOOTROM_DIR := $(base_dir)/bootrom/xip
+
+rocketchip_dir := $(base_dir)/rocket-chip
+sifiveblocks_dir := $(base_dir)/sifive-blocks
+VSRCS := \
+	$(rocketchip_dir)/vsrc/AsyncResetReg.v \
+	$(rocketchip_dir)/vsrc/plusarg_reader.v \
+	$(sifiveblocks_dir)/vsrc/SRLatch.v \
+	$(FPGA_DIR)/common/vsrc/PowerOnResetFPGAOnly.v \
+	$(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).rom.v \
+	$(BUILD_DIR)/$(CONFIG_PROJECT).$(CONFIG).v
+
+include common.mk
