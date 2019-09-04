@@ -98,6 +98,34 @@ $ export PATH=${PATH}:/tools/Xilinx/Vivado/2016.4/bin
 Change the line above if the `vivado` is installed to
 `/opt/Xilinx/Vivado/2016.4/bin` accordingly.
 
+### Vivado license
+
+Please acquire vivado license and install if you are using vc707 or vcu118 from logging in to Xilinx website with your account.
+
+
+Type `$ ifconfig -a` to make sure that the network interface name is `eth0`. If not, the Vivado cannot recognize the license from the NIC interface when it is similar to `enp0s25`.
+
+Must follow the bellow to rename the network interface:
+
+```
+$ sudo vi /etc/default/grub
+```
+
+Then add this line beneath those GRUB... lines:
+
+```
+GRUB_CMDLINE_LINUX="net.ifnames=0 biosdevname=0"
+```
+
+Then update the grub:
+```
+$ sudo grub-mkconfig -o /boot/grub/grub.cfg
+$ sudo update-grub
+```
+
+And reboot the machine.
+Check with `ifconfig` again if `eth0` is shown or not.
+
 
 Freedom E300 Arty FPGA Dev Kit
 ------------------------------
