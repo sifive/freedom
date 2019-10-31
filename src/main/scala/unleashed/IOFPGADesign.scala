@@ -62,7 +62,7 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
   val dtbrom = LazyModule(new TLROM(0x2ff0000000L, 0x10000, dtb.contents, executable = false, beatBytes = 8))
   val msimaster = LazyModule(new MSIMaster(Seq(MSITarget(address=0x2020000, spacing=4, number=10))))
   // We only support the first DDR or PCIe controller in this design
-  val ddr = p(DDROverlayKey).headOption.map(_(DDROverlayParams(0x3000000000L, wrangler.node)))
+  val ddr = p(DDROverlayKey).headOption.map(_(DDROverlayParams(0x3000000000L, wrangler.node, corePLL)))
   val pcieControllers = p(PCIeOverlayKey).size
   val lowBarSize = if (pcieControllers == 1) 0x20000000 else 0x10000000
   val pcieAddrs = Seq(
@@ -70,7 +70,7 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
     (0x2d00000000L, Seq(AddressSet(0x2400000000L, 0x3ffffffffL), AddressSet(0x40000000+lowBarSize, lowBarSize-1))),
     (0x2e00000000L, Seq(AddressSet(0x2400000000L, 0x3ffffffffL))))
   val (pcie, pcieInt) = p(PCIeOverlayKey).zipWithIndex.map { case (overlay, i) =>
-    pcieAddrs(i) match { case (ecam, bars) => overlay(PCIeOverlayParams(wrangler.node, bars, ecam)) }
+    pcieAddrs(i) match { case (ecam, bars) => overlay(PCIeOverlayParams(wrangler.node, bars, ecam, corePLL = corePLL)) }
   }.unzip
   // We require ChipLink, though, obviously
   val link = p(ChipLinkOverlayKey).head(ChipLinkOverlayParams(

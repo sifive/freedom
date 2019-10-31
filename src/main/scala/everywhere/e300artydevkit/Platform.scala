@@ -163,12 +163,12 @@ class E300ArtyDevKitPlatform(implicit val p: Parameters) extends Module {
   SPIPinsFromPort(io.pins.qspi, sys.qspi(0), clock = sys.clock, reset = sys.reset, syncStages = 3)
 
   // JTAG Debug Interface
-  val sjtag = sys.debug.systemjtag.get
+  val sjtag = sys.debug.get.systemjtag.get
   JTAGPinsFromPort(io.pins.jtag, sjtag.jtag)
   sjtag.reset := io.jtag_reset
   sjtag.mfr_id := p(JtagDTMKey).idcodeManufId.U(11.W)
 
-  io.ndreset := sys.debug.ndreset
+  io.ndreset := sys.debug.get.ndreset
 
   // AON Pads -- direct connection is OK because
   // EnhancedPin is hard-coded in MockAONPads

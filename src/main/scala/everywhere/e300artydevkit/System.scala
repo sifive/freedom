@@ -22,7 +22,6 @@ import sifive.blocks.devices.i2c._
 //-------------------------------------------------------------------------
 
 class E300ArtyDevKitSystem(implicit p: Parameters) extends RocketSubsystem
-    with HasPeripheryMaskROMSlave
     with HasPeripheryDebug
     with HasPeripheryMockAON
     with HasPeripheryUART
@@ -30,6 +29,7 @@ class E300ArtyDevKitSystem(implicit p: Parameters) extends RocketSubsystem
     with HasPeripherySPI
     with HasPeripheryGPIO
     with HasPeripheryPWM
+    with HasHierarchicalBusTopology
     with HasPeripheryI2C {
   override lazy val module = new E300ArtyDevKitSystemModule(this)
 }

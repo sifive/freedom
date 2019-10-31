@@ -43,30 +43,30 @@ class DevKitWrapper()(implicit p: Parameters) extends LazyModule
   // removing the debug trait is invasive, so we hook it up externally for now
   val jt = p(JTAGDebugOverlayKey).headOption.map(_(JTAGDebugOverlayParams())).get
 
-  val topMod = LazyModule(new DevKitFPGADesign(wrangler.node)(p))
+  val topMod = LazyModule(new DevKitFPGADesign(wrangler.node, corePLL)(p))
 
   override lazy val module = new LazyRawModuleImp(this) {
     val (core, _) = coreClock.in(0)
     childClock := core.clock
 
-    val djtag = topMod.module.debug.systemjtag.get
-    djtag.jtag.TCK := jt.jtag_TCK
-    djtag.jtag.TMS := jt.jtag_TMS
-    djtag.jtag.TDI := jt.jtag_TDI
-    jt.jtag_TDO    := djtag.jtag.TDO.data
+    val djtag = topMod.module.debug.get.systemjtag.get
+    djtag.jtag.TCK := jt.TCK
+    djtag.jtag.TMS := jt.TMS
+    djtag.jtag.TDI := jt.TDI
+    jt.TDO    := djtag.jtag.TDO
 
     djtag.mfr_id := p(JtagDTMKey).idcodeManufId.U(11.W)
     djtag.reset  := core.reset
 
-    childReset := core.reset | topMod.module.debug.ndreset
+    childReset := core.reset | topMod.module.debug.get.ndreset
   }
 }
 
 case object DevKitFPGAFrequencyKey extends Field[Double](100.0)
 
-class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) extends RocketSubsystem
-    with HasPeripheryMaskROMSlave
+class DevKitFPGADesign(wranglerNode: ClockAdapterNode, corePLL: PLLNode)(implicit p: Parameters) extends RocketSubsystem
     with HasPeripheryDebug
+    with HasHierarchicalBusTopology
 {
   val tlclock = new FixedClockResource("tlclk", p(DevKitFPGAFrequencyKey))
 
@@ -93,7 +93,7 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
 
 
   // TODO: currently, only hook up one memory channel
-  val ddr = p(DDROverlayKey).headOption.map(_(DDROverlayParams(p(ExtMem).get.master.base, wranglerNode)))
+  val ddr = p(DDROverlayKey).headOption.map(_(DDROverlayParams(p(ExtMem).get.master.base, wranglerNode, corePLL)))
   ddr.get := mbus.toDRAMController(Some("xilinxvc707mig"))()
 
   // Work-around for a kernel bug (command-line ignored if /chosen missing)
@@ -102,7 +102,7 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
   }
 
   // hook the first PCIe the board has
-  val pcies = p(PCIeOverlayKey).headOption.map(_(PCIeOverlayParams(wranglerNode)))
+  val pcies = p(PCIeOverlayKey).headOption.map(_(PCIeOverlayParams(wranglerNode, corePLL = corePLL)))
   pcies.zipWithIndex.map { case((pcieNode, pcieInt), i) =>
     val pciename = Some(s"pcie_$i")
     sbus.fromMaster(pciename) { pcieNode }
