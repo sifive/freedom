@@ -21,6 +21,9 @@ class DefaultFreedomEConfig extends Config (
   new WithNBreakpoints(2)        ++
   new WithNExtTopInterrupts(0)   ++
   new WithJtagDTM                ++
+  new WithL1ICacheWays(2)        ++
+  new WithL1ICacheSets(128)      ++
+  new WithDefaultBtb             ++
   new TinyConfig
 )
 
@@ -61,5 +64,8 @@ class E300ArtyDevKitConfig extends Config(
       idcodePartNum = 0x000,
       idcodeManufId = 0x489,
       debugIdleCycles = 5)
+    case RocketTilesKey => up(RocketTilesKey, site) map { r =>
+      r.copy(icache = r.icache.map(_.copy(itimAddr = Some(0x8000000L))))
+    }
   })
 )
