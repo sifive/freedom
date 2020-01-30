@@ -44,9 +44,8 @@ class U500DevKitConfig extends Config(
         maxAtomic=site(XLen)/8,
         maxTransfer=128,
         region = RegionType.TRACKED)))
-    case PeripheryBusKey => up(PeripheryBusKey, site).copy(frequency =
-      BigDecimal(site(DevKitFPGAFrequencyKey)*1000000).setScale(0, BigDecimal.RoundingMode.HALF_UP).toBigInt,
-      errorDevice = None)
+    case PeripheryBusKey => up(PeripheryBusKey, site).copy(dtsFrequency =
+    Some(BigDecimal(site(DevKitFPGAFrequencyKey)*1000000).setScale(0, BigDecimal.RoundingMode.HALF_UP).toBigInt))  
     case DTSTimebase => BigInt(1000000)
     case JtagDTMKey => new JtagDTMConfig (
       idcodeVersion = 2,      // 1 was legacy (FE310-G000, Acai).

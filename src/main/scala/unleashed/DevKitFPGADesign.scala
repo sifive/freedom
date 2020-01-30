@@ -1,4 +1,4 @@
-// See LICENSE for license details.
+/// See LICENSE for license details.
 
 package sifive.freedom.unleashed
 
@@ -33,15 +33,15 @@ object PinGen {
 
 class DevKitWrapper()(implicit p: Parameters) extends LazyModule
 {
-  val sysClock  = p(ClockInputOverlayKey).head(ClockInputOverlayParams())
+  val sysClock  = p(ClockInputOverlayKey).headOption.map(_.place(ClockInputDesignInput()).overlayOutput.node)
   val corePLL   = p(PLLFactoryKey)()
   val coreGroup = ClockGroup()
   val wrangler  = LazyModule(new ResetWrangler)
   val coreClock = ClockSinkNode(freqMHz = p(DevKitFPGAFrequencyKey))
-  coreClock := wrangler.node := coreGroup := corePLL := sysClock
+  coreClock := wrangler.node := coreGroup := corePLL := sysClock.get
 
   // removing the debug trait is invasive, so we hook it up externally for now
-  val jt = p(JTAGDebugOverlayKey).headOption.map(_(JTAGDebugOverlayParams())).get
+  val jt = p(JTAGDebugOverlayKey).headOption.map(_.place(JTAGDebugDesignInput())).get
 
   val topMod = LazyModule(new DevKitFPGADesign(wrangler.node)(p))
 
@@ -93,7 +93,7 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
 
 
   // TODO: currently, only hook up one memory channel
-  val ddr = p(DDROverlayKey).headOption.map(_(DDROverlayParams(p(ExtMem).get.master.base, wranglerNode)))
+  val ddr = p(DDROverlayKey).headOption.map(_.place(DDROverlayParams(p(ExtMem).get.master.base, wranglerNode)))
   ddr.get := mbus.toDRAMController(Some("xilinxvc707mig"))()
 
   // Work-around for a kernel bug (command-line ignored if /chosen missing)
@@ -102,7 +102,7 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
   }
 
   // hook the first PCIe the board has
-  val pcies = p(PCIeOverlayKey).headOption.map(_(PCIeOverlayParams(wranglerNode)))
+  val pcies = p(PCIeOverlayKey).headOption.map(_.place(PCIeOverlayParams(wranglerNode)))
   pcies.zipWithIndex.map { case((pcieNode, pcieInt), i) =>
     val pciename = Some(s"pcie_$i")
     sbus.fromMaster(pciename) { pcieNode }
@@ -117,7 +117,7 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
     g.ioNode.makeSink
   }
 
-  val leds = p(LEDOverlayKey).headOption.map(_(LEDOverlayParams()))
+  val leds = p(LEDOverlayKey).headOption.map(_.place(LEDOverlayParams()))
 
   override lazy val module = new U500VC707DevKitSystemModule(this)
 }
