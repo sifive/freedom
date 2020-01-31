@@ -41,7 +41,7 @@ class DevKitWrapper()(implicit p: Parameters) extends LazyModule
   coreClock := wrangler.node := coreGroup := corePLL := sysClock.get
 
   // removing the debug trait is invasive, so we hook it up externally for now
-  val jt = p(JTAGDebugOverlayKey).headOption.map(_.place(JTAGDebugDesignInput())).get
+  val jt = p(JTAGDebugOverlayKey).headOption.map(_.place(JTAGDebugDesignInput()).overlayOutput)
 
   val topMod = LazyModule(new DevKitFPGADesign(wrangler.node)(p))
 
@@ -49,43 +49,42 @@ class DevKitWrapper()(implicit p: Parameters) extends LazyModule
     val (core, _) = coreClock.in(0)
     childClock := core.clock
 
-    val djtag = topMod.module.debug.systemjtag.get
-    djtag.jtag.TCK := jt.jtag_TCK
-    djtag.jtag.TMS := jt.jtag_TMS
-    djtag.jtag.TDI := jt.jtag_TDI
-    jt.jtag_TDO    := djtag.jtag.TDO.data
+    val djtag = topMod.module.debug.get.systemjtag.get
+    djtag.jtag.TCK := jt.get.jtag.TCK
+    djtag.jtag.TMS := jt.get.jtag.TMS
+    djtag.jtag.TDI := jt.get.jtag.TDI
+    jt.get.jtag.TDO    := djtag.jtag.TDO.data
 
     djtag.mfr_id := p(JtagDTMKey).idcodeManufId.U(11.W)
     djtag.reset  := core.reset
 
-    childReset := core.reset | topMod.module.debug.ndreset
+    childReset := core.reset | topMod.module.debug.get.ndreset
   }
 }
 
 case object DevKitFPGAFrequencyKey extends Field[Double](100.0)
 
 class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) extends RocketSubsystem
-    with HasPeripheryMaskROMSlave
     with HasPeripheryDebug
 {
   val tlclock = new FixedClockResource("tlclk", p(DevKitFPGAFrequencyKey))
 
   // hook up UARTs, based on configuration and available overlays
-  val divinit = (p(PeripheryBusKey).frequency / 115200).toInt
+  val divinit = (p(PeripheryBusKey).dtsFrequency.get / 115200).toInt
   val uartParams = p(PeripheryUARTKey)
   val uartOverlays = p(UARTOverlayKey)
   val uartParamsWithOverlays = uartParams zip uartOverlays
   uartParamsWithOverlays.foreach { case (uparam, uoverlay) => {
-    val u = uoverlay(UARTOverlayParams(uparam, divinit, pbus, ibus.fromAsync))
-    tlclock.bind(u.device)
+    val u = uoverlay.place(UARTDesignInput(uparam, divinit, pbus, ibus.fromAsync)).overlayOutput
+    tlclock.bind(u.uart.device)
   } }
 
   (p(PeripherySPIKey) zip p(SDIOOverlayKey)).foreach { case (sparam, soverlay) => {
-    val s = soverlay(SDIOOverlayParams(sparam, pbus, ibus.fromAsync))
-    tlclock.bind(s.device)
+    val s = soverlay.place(SDIODesignInput(sparam, pbus, ibus.fromAsync)).overlayOutput
+    tlclock.bind(s.spi.device)
 
     // Assuming MMC slot attached to SPIs. See TODO above.
-    val mmc = new MMCDevice(s.device)
+    val mmc = new MMCDevice(s.spi.device)
     ResourceBinding {
       Resource(mmc, "reg").bind(ResourceAddress(0))
     }
