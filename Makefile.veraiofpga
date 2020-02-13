@@ -2,7 +2,7 @@
 base_dir := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 BUILD_DIR := $(base_dir)/builds/vera-iofpga
 FPGA_DIR := $(base_dir)/fpga-shells/microsemi
-MODEL := IOFPGAChip
+MODEL := IOFPGA
 PROJECT := sifive.freedom.unleashed.vera.iofpga
 export CONFIG_PROJECT := sifive.freedom.unleashed.vera.iofpga
 export CONFIG := IOFPGAConfig

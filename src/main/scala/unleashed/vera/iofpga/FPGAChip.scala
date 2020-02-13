@@ -17,7 +17,7 @@ import sifive.blocks.devices.pinctrl.{BasePin}
 import sifive.blocks.devices.msi._
 import sifive.blocks.devices.chiplink._
 
-import sifive.fpgashells.shell.microsemi.verashell.{VeraShell,HasPCIe,HasDDR3,HasPFEvalKitChipLink}
+import sifive.fpgashells.shell.microsemi._
 import sifive.fpgashells.devices.microsemi.polarfireevalkitpciex4._
 import sifive.freedom.unleashed.FreedomU500Config
 import sifive.fpgashells.ip.microsemi.CLKINT
@@ -26,6 +26,9 @@ import sifive.fpgashells.ip.microsemi.polarfireccc._
 
 import sifive.fpgashells.devices.microsemi.polarfireddr4._
 import sifive.fpgashells.clocks._
+
+import sifive.fpgashells.shell.microsemi.polarfireevalkitshell._
+
 
 //-------------------------------------------------------------------------
 // PinGen

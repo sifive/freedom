@@ -3,6 +3,8 @@
 package sifive.freedom.unleashed
 
 import Chisel._
+import chisel3.{VecInit}
+
 import chisel3.experimental.{withClockAndReset}
 
 import freechips.rocketchip.config._
@@ -11,6 +13,7 @@ import freechips.rocketchip.interrupts._
 import freechips.rocketchip.tilelink._
 import freechips.rocketchip.devices.tilelink._
 import freechips.rocketchip.util.{ElaborationArtefacts,ResetCatchAndSync}
+import freechips.rocketchip.subsystem._
 
 import sifive.blocks.devices.msi._
 import sifive.blocks.devices.chiplink._
@@ -46,12 +49,13 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
                    AddressSet.misaligned(0x2000000000L, 0x1000000000L)              // local MMIO             [128GB, 192GB)
 
   // Core clocking
-  val sysClock  = p(ClockInputOverlayKey).head(ClockInputOverlayParams())
+  val sysClock  = p(ClockInputOverlayKey).head.place(ClockInputDesignInput()).overlayOutput.node
   val sysTap    = ClockIdentityNode()
   val corePLL   = p(PLLFactoryKey)()
   val coreGroup = ClockGroup()
   val wrangler  = LazyModule(new ResetWrangler)
   val coreClock = ClockSinkNode(freqMHz = p(IOFPGAFrequencyKey))
+  val fourgbdimm = p(ExtMem).get.master.size == 0x100000000L
   coreClock := wrangler.node := coreGroup := corePLL := sysTap := sysClock
 
   // SoC components
@@ -62,19 +66,22 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
   val dtbrom = LazyModule(new TLROM(0x2ff0000000L, 0x10000, dtb.contents, executable = false, beatBytes = 8))
   val msimaster = LazyModule(new MSIMaster(Seq(MSITarget(address=0x2020000, spacing=4, number=10))))
   // We only support the first DDR or PCIe controller in this design
-  val ddr = p(DDROverlayKey).headOption.map(_(DDROverlayParams(0x3000000000L, wrangler.node)))
+  val ddr = p(DDROverlayKey).headOption.map(_.place(DDRDesignInput(p(ExtMem).get.master.base, wrangler.node, corePLL, fourgbdimm)))
   val pcieControllers = p(PCIeOverlayKey).size
   val lowBarSize = if (pcieControllers == 1) 0x20000000 else 0x10000000
   val pcieAddrs = Seq(
     (0x2c00000000L, Seq(AddressSet(0x2000000000L, 0x3ffffffffL), AddressSet(0x40000000, lowBarSize-1))),
     (0x2d00000000L, Seq(AddressSet(0x2400000000L, 0x3ffffffffL), AddressSet(0x40000000+lowBarSize, lowBarSize-1))),
     (0x2e00000000L, Seq(AddressSet(0x2400000000L, 0x3ffffffffL))))
-  val (pcie, pcieInt) = p(PCIeOverlayKey).zipWithIndex.map { case (overlay, i) =>
-    pcieAddrs(i) match { case (ecam, bars) => overlay(PCIeOverlayParams(wrangler.node, bars, ecam)) }
-  }.unzip
+  val pcieOverlayOutput = p(PCIeOverlayKey).zipWithIndex.map { case (overlay, i) =>
+    pcieAddrs(i) match { case (ecam, bars) => overlay.place(PCIeDesignInput(wrangler.node, corePLL = corePLL)).overlayOutput}
+    
+  }
+  val pcie = pcieOverlayOutput.map(_.pcieNode)
+  val pcieInt = pcieOverlayOutput.map(_.intNode)
   // We require ChipLink, though, obviously
-  val link = p(ChipLinkOverlayKey).head(ChipLinkOverlayParams(
-    params   = chiplinkparams,
+  val link = p(ChipLinkOverlayKey).head.place(ChipLinkDesignInput(
+    di   = chiplinkparams,
     txGroup  = coreGroup,
     txData   = coreClock,
     wrangler = wrangler.node))
@@ -93,18 +100,18 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
   // split local master traffic either to local routing or off-chip
   xbar.node := TLFilter(filter) := TLBuffer() := mbar.node
 
-  (link
-    := TLBuffer(BufferParams.none, BufferParams.default)
-    := oTap
-    := TLBuffer(BufferParams.default, BufferParams.none)
-    := mbar.node)
 
-  (xbar.node
-    := TLBuffer(BufferParams.none, BufferParams.default)
-    := iTap
-    := TLBuffer(BufferParams.default, BufferParams.none)
-    := link)
+ (link.overlayOutput.node
+  := TLBuffer(BufferParams.none, BufferParams.default)
+  := oTap
+  := TLBuffer(BufferParams.default, BufferParams.none)
+  := mbar.node)
 
+
+ (xbar.node 
+   := TLBuffer(BufferParams.none, BufferParams.default) := iTap := TLBuffer(BufferParams.default, BufferParams.none) := link.overlayOutput.node
+  
+ )
   // receive traffic either from local routing or from off-chip
   sbar.node := TLBuffer() := TLAtomicAutomata() := TLBuffer() := TLFIFOFixer() := TLHintHandler() := TLBuffer() := TLWidthWidget(4) := xbar.node
 
@@ -115,7 +122,7 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
     val sram = LazyModule(new TLRAM(AddressSet(0x2f90000000L, 0xfff), beatBytes = 8))
     sram.node := TLFragmenter(8, 64) := sbar.node
   }
-  ddr.foreach { _ := sbar.node }
+  ddr.foreach { _.overlayOutput.ddr := sbar.node }
   pcie.foreach { _ :*= TLWidthWidget(8) :*= sbar.node }
 
   // interrupts are fed into chiplink via MSI
@@ -141,7 +148,7 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
   }
 
   // grab LEDs if any
-  val leds = p(LEDOverlayKey).headOption.map(_(LEDOverlayParams()))
+  val leds = p(LEDOverlayKey).map(_.place(LEDDesignInput()))
 
   // Bind IOFPGA interrupts to PLIC on the HiFive unleashed
   val plicDevice = new Device {
@@ -206,13 +213,15 @@ class IOFPGADesign()(implicit p: Parameters) extends LazyModule with BindingScop
     }
 
     // Connect status indication
-    leds.foreach { leds =>
-      val width = leds.getWidth
+      val leds_seq = leds.map(_.overlayOutput.led.getWrappedValue)
+      val leds_vec = VecInit(leds_seq)
+      val leds_uint = leds_vec.asUInt
+
+      val width = leds_uint.getWidth
       val stride = xferWidth / width
       val trafficLED = Cat(Seq.tabulate(width) { i => traffic(i*stride) }.reverse)
       val resetLED = Cat(wrangler.module.status, toggle)
-      leds := Mux(core.reset, resetLED, trafficLED)
-    }
+      leds_uint := Mux(core.reset, resetLED, trafficLED)
   }
 }
 

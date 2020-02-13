@@ -92,8 +92,13 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
 
 
   // TODO: currently, only hook up one memory channel
-  val ddr = p(DDROverlayKey).headOption.map(_.place(DDROverlayParams(p(ExtMem).get.master.base, wranglerNode)))
-  ddr.get := mbus.toDRAMController(Some("xilinxvc707mig"))()
+  val fourgbdimm = p(ExtMem).get.master.size == 0x100000000L
+  val corePLL   = p(PLLFactoryKey)()
+  val wrangler  = LazyModule(new ResetWrangler)
+  val ddr = p(DDROverlayKey).headOption.map(_.place(DDRDesignInput(p(ExtMem).get.master.base, wranglerNode, corePLL, fourgbdimm)))
+  ddr.foreach {_.overlayOutput.ddr := mbus.toDRAMController(Some("xilinxmig"))()}
+  val mparams = p(ExtMem).get.master
+
 
   // Work-around for a kernel bug (command-line ignored if /chosen missing)
   val chosen = new DeviceSnippet {
@@ -101,12 +106,13 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
   }
 
   // hook the first PCIe the board has
-  val pcies = p(PCIeOverlayKey).headOption.map(_.place(PCIeOverlayParams(wranglerNode)))
-  pcies.zipWithIndex.map { case((pcieNode, pcieInt), i) =>
+  val pcies = p(PCIeOverlayKey).headOption.map(_.place(PCIeDesignInput(wranglerNode, corePLL = corePLL)).overlayOutput)
+  pcies.zipWithIndex.map { case(overlayOut, i) =>  
     val pciename = Some(s"pcie_$i")
-    sbus.fromMaster(pciename) { pcieNode }
-    sbus.toFixedWidthSlave(pciename) { pcieNode }
-    ibus.fromSync := pcieInt
+    sbus.fromMaster(pciename) { overlayOut.pcieNode }
+    sbus.toFixedWidthSlave(pciename) { overlayOut.pcieNode }
+    ibus.fromSync := overlayOut.intNode
+
   }
 
   // LEDs / GPIOs
@@ -116,7 +122,8 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
     g.ioNode.makeSink
   }
 
-  val leds = p(LEDOverlayKey).headOption.map(_.place(LEDOverlayParams()))
+  
+  val ledsOut = p(LEDOverlayKey).map(_.place(LEDDesignInput()).overlayOutput.led) 
 
   override lazy val module = new U500VC707DevKitSystemModule(this)
 }
@@ -138,7 +145,12 @@ class U500VC707DevKitSystemModule[+L <: DevKitFPGADesign](_outer: L)
 
   gpio_pins.pins.foreach { _.i.ival := Bool(false) }
   val gpio_cat = Cat(Seq.tabulate(gpio_pins.pins.length) { i => gpio_pins.pins(i).o.oval })
-  _outer.leds.get := gpio_cat
+  
+
+   _outer.ledsOut.foreach {
+     _ := gpio_cat
+   }
+     
 }
 
 // Allow frequency of the design to be controlled by the Makefile
