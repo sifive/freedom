@@ -3,6 +3,7 @@ package sifive.freedom.everywhere.e300artydevkit
 
 import Chisel._
 import chisel3.core.{attach}
+import sifive.fpgashells.clocks._
 import chisel3.experimental.{withClockAndReset}
 
 import freechips.rocketchip.config._
@@ -37,9 +38,8 @@ class E300ArtyDevKitFPGAChip(implicit override val p: Parameters) extends ArtySh
   // DUT
   //-----------------------------------------------------------------------
 
-  withClockAndReset(clock_32MHz, ck_rst) {
-    val dut = Module(new E300ArtyDevKitPlatform)
-
+    withClockAndReset(clock_32MHz, ck_rst) {
+    val dut = Module(new E300ArtyDevKitPlatform)  
     //---------------------------------------------------------------------
     // SPI flash IOBUFs
     //---------------------------------------------------------------------

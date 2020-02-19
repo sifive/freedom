@@ -29,7 +29,9 @@ class E300ArtyDevKitSystem(implicit p: Parameters) extends RocketSubsystem
     with HasPeripherySPI
     with HasPeripheryGPIO
     with HasPeripheryPWM
-    with HasPeripheryI2C {
+    with HasPeripheryI2C
+    with HasHierarchicalBusTopology 
+    {
   override lazy val module = new E300ArtyDevKitSystemModule(this)
 }
 

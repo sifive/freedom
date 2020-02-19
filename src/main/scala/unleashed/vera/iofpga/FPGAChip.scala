@@ -170,7 +170,7 @@ class IOFPGA(
     io.dll_up  := lock
   }
 }
-
+/*
 class IOFPGAChip(implicit override val p: Parameters) extends VeraShell
   with HasPFEvalKitChipLink {
 
@@ -302,5 +302,5 @@ class IOFPGAChip(implicit override val p: Parameters) extends VeraShell
   }
 
 }
-
+*/
 class IOFPGAConfig extends Config(new FreedomU500Config)

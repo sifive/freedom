@@ -51,7 +51,10 @@ class E300ArtyDevKitPlatformIO(implicit val p: Parameters) extends Bundle {
 //-------------------------------------------------------------------------
 
 class E300ArtyDevKitPlatform(implicit val p: Parameters) extends Module {
-  val sys = Module(LazyModule(new E300ArtyDevKitSystem).module)
+  //val sys = Module(LazyModule(new E300ArtyDevKitSystem).module)
+  val intsys = LazyModule(new E300ArtyDevKitSystem)
+  val sys = Module(intsys.module)
+
   val io = new E300ArtyDevKitPlatformIO
 
   // This needs to be de-asserted synchronously to the coreClk.
