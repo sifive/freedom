@@ -38,12 +38,12 @@ class U500DevKitConfig extends Config(
   new WithNExtTopInterrupts(0)   ++
   new U500DevKitPeripherals ++
   new FreedomU500Config().alter((site,here,up) => {
-    case SystemBusKey => up(SystemBusKey).copy(
-      errorDevice = Some(DevNullParams(
-        Seq(AddressSet(0x3000, 0xfff)),
-        maxAtomic=site(XLen)/8,
-        maxTransfer=128,
-        region = RegionType.TRACKED)))
+    case SystemBusKey => up(SystemBusKey).copy()
+      //errorDevice = Some(DevNullParams(
+      //  Seq(AddressSet(0x3000, 0xfff)),
+      //  maxAtomic=site(XLen)/8,
+      //  maxTransfer=128,
+      //  region = RegionType.TRACKED)))
     case PeripheryBusKey => up(PeripheryBusKey, site).copy(dtsFrequency =
     Some(BigDecimal(site(DevKitFPGAFrequencyKey)*1000000).setScale(0, BigDecimal.RoundingMode.HALF_UP).toBigInt))  
     case DTSTimebase => BigInt(1000000)

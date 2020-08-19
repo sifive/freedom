@@ -43,7 +43,7 @@ class DevKitWrapper()(implicit p: Parameters) extends LazyModule
   // removing the debug trait is invasive, so we hook it up externally for now
   val jt = p(JTAGDebugOverlayKey).headOption.map(_.place(JTAGDebugDesignInput()).overlayOutput)
 
-  val topMod = LazyModule(new DevKitFPGADesign(wrangler.node)(p))
+  val topMod = LazyModule(new DevKitFPGADesign(wrangler.node, corePLL)(p))
 
   override lazy val module = new LazyRawModuleImp(this) {
     val (core, _) = coreClock.in(0)
@@ -53,7 +53,7 @@ class DevKitWrapper()(implicit p: Parameters) extends LazyModule
     djtag.jtag.TCK := jt.get.jtag.TCK
     djtag.jtag.TMS := jt.get.jtag.TMS
     djtag.jtag.TDI := jt.get.jtag.TDI
-    jt.get.jtag.TDO    := djtag.jtag.TDO.data
+    jt.get.jtag.TDO.data    := djtag.jtag.TDO.data
 
     djtag.mfr_id := p(JtagDTMKey).idcodeManufId.U(11.W)
     djtag.reset  := core.reset
@@ -64,8 +64,9 @@ class DevKitWrapper()(implicit p: Parameters) extends LazyModule
 
 case object DevKitFPGAFrequencyKey extends Field[Double](100.0)
 
-class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) extends RocketSubsystem
+class DevKitFPGADesign(wranglerNode: ClockAdapterNode, corePLL: PLLNode)(implicit p: Parameters) extends RocketSubsystem
     with HasPeripheryDebug
+    with  HasHierarchicalBusTopology
 {
   val tlclock = new FixedClockResource("tlclk", p(DevKitFPGAFrequencyKey))
 
@@ -93,8 +94,6 @@ class DevKitFPGADesign(wranglerNode: ClockAdapterNode)(implicit p: Parameters) e
 
   // TODO: currently, only hook up one memory channel
   val fourgbdimm = p(ExtMem).get.master.size == 0x100000000L
-  val corePLL   = p(PLLFactoryKey)()
-  val wrangler  = LazyModule(new ResetWrangler)
   val ddr = p(DDROverlayKey).headOption.map(_.place(DDRDesignInput(p(ExtMem).get.master.base, wranglerNode, corePLL, fourgbdimm)))
   ddr.foreach {_.overlayOutput.ddr := mbus.toDRAMController(Some("xilinxmig"))()}
   val mparams = p(ExtMem).get.master
