@@ -1,8 +1,15 @@
 Freedom
 =======
 
+
+
+
 Attention - 
 As of March 1 2021, SiFive is archiving the freedom repository. The code here is not being actively maintained, and we can't continue to provide updates while the fpga boards, software ecosystems and other dependencies change. 
+
+
+
+
 
 
 This repository contains the RTL created by SiFive for its Freedom E300 and U500
