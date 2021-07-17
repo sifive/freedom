@@ -20,6 +20,8 @@ you may meet much trouble.
 First, you should download the repository(it may take much time. Maybe vpn need?):
 ```sh
 $ git clone --recursive https://github.com/gongqingfeng/freedom.git
+# you can also use gitee
+$ git clone --recursive https://gitee.com/gongqingfeng/freedom.git
 ```
 
 Second, you should enter the work dir like this:
@@ -96,7 +98,7 @@ $ make -f Makefile.e300zybodevkit vivado
 ```
 Note1: This lab tested within vivado 2016.2.
 
-Note2: Before you generate bitstream, you are supposed to add the `freedom/fpga-shells/xilinx/ebaz4205/tcl/no_connect.tcl` file to your Bitstream Settings's tcl.pre blank line. Otherwise, you will get errors.
+Note2: Before you generate bitstream, you are supposed to add the `freedom/fpga-shells/xilinx/zybo/tcl/no_connect.tcl` file to your Bitstream Settings's tcl.pre blank line. Otherwise, you will get errors.
 
 The vivado project files place under `builds/e300zybodevkit` and the *.v files place under `builds/e300zybodevkit/obj`.
 
