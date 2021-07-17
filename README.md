@@ -95,6 +95,7 @@ $ make -f Makefile.e300zybodevkit project
 $ make -f Makefile.e300zybodevkit vivado
 ```
 Note1: This lab tested within vivado 2016.2.
+
 Note2: Before you generate bitstream, you are supposed to add the `freedom/fpga-shells/xilinx/ebaz4205/tcl/no_connect.tcl` file to your Bitstream Settings's tcl.pre blank line. Otherwise, you will get errors.
 
 The vivado project files place under `builds/e300zybodevkit` and the *.v files place under `builds/e300zybodevkit/obj`.
